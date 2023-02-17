@@ -26,13 +26,11 @@ class PaparazziProcessor(
   private val codeGenerator: CodeGenerator,
   private val logger: KSPLogger
 ) : SymbolProcessor {
-
   override fun process(resolver: Resolver): List<KSAnnotated> {
     return resolver.findPaparazziFunctions()
-      .map { (function, annotations) ->
-        val models = function.accept(PaparazziVisitor(annotations, logger), Unit)
-        writeFiles(models, resolver)
-        function
+      .onEach { function ->
+        function.accept(PaparazziVisitor(logger), Unit)
+          ?.writeFile(resolver)
       }
       .filterNot { it.validate() }
       .toList()
@@ -41,18 +39,15 @@ class PaparazziProcessor(
   private fun Resolver.findPaparazziFunctions() =
     getSymbolsWithAnnotation("androidx.compose.runtime.Composable")
       .filterIsInstance<KSFunctionDeclaration>()
-      .map { Pair(it, it.annotations.findPaparazzi()) }
-      .filter { (_, annotations) -> annotations.count() > 0 }
+      .filter { it.annotations.findPaparazzi().count() > 0 }
 
-  private fun writeFiles(models: Sequence<PaparazziModel>, resolver: Resolver) {
+  private fun PaparazziModel.writeFile(resolver: Resolver) {
     val dependencies = Dependencies(false, *resolver.getAllFiles().toList().toTypedArray())
 
-    models.forEachIndexed { i, model ->
-      val file = PaparazziPoet.buildFile(model, i)
+    val file = PaparazziPoet.buildFile(this)
 
-      val fileOS = codeGenerator.createNewFile(dependencies, file.packageName, file.name)
-      OutputStreamWriter(fileOS, StandardCharsets.UTF_8).use(file::writeTo)
-    }
+    val fileOS = codeGenerator.createNewFile(dependencies, file.packageName, file.name)
+    OutputStreamWriter(fileOS, StandardCharsets.UTF_8).use(file::writeTo)
   }
 
   /**

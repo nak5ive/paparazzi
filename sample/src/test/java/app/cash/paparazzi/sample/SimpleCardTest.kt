@@ -1,9 +1,9 @@
 package app.cash.paparazzi.sample
 
 import androidx.compose.runtime.Composable
-import app.cash.paparazzi.sample.util.MyPaparazzi
+import app.cash.paparazzi.annotation.api.Paparazzi
 
-@MyPaparazzi
+@Paparazzi
 @Composable
 fun SimpleCardTest() {
   val model = SimpleCardModel(

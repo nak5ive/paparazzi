@@ -11,19 +11,14 @@ import com.squareup.kotlinpoet.FileSpec
 import com.squareup.kotlinpoet.FunSpec
 import com.squareup.kotlinpoet.PropertySpec
 import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.ksp.toTypeName
 
 object PaparazziPoet {
 
-  fun buildFile(
-    model: PaparazziModel,
-    index: Int
-  ): FileSpec {
+  fun buildFile(model: PaparazziModel): FileSpec {
     val testSuffix = if (model.functionName.endsWith("Test")) "" else "Test"
-    val classIndexSuffix = if (model.showClassIndex) "_$index" else ""
-    val className = "${model.functionName}$testSuffix$classIndexSuffix"
+    val className = "${Paparazzi::class.simpleName}_${model.functionName}$testSuffix"
 
-    return FileSpec.builder(model.packageName, "${Paparazzi::class.simpleName}_$className")
+    return FileSpec.builder(model.packageName, className)
       .addType(
         TypeSpec.classBuilder(className)
           .addRunWithAnnotation()
@@ -71,27 +66,14 @@ object PaparazziPoet {
     codeBuilder
       .addStatement("paparazzi.snapshot {")
       .indent()
-      .apply {
-        if (model.composableWrapper != null) {
-          val wrapCall = if (model.composableWrapper.value == null) "wrap" else "wrap(wrapperParam)"
-          addStatement("%T().$wrapCall {", model.composableWrapper.wrapper.toTypeName())
-          indent()
-        }
-      }
       .addStatement(
         "%L(${if (model.previewParam != null) "previewParam" else ""})",
         model.functionName
       )
-      .apply {
-        if (model.composableWrapper != null) {
-          unindent()
-          addStatement("}")
-        }
-      }
       .unindent()
       .addStatement("}")
 
-    FunSpec.builder(model.testName.ifEmpty { "default" }.lowercase())
+    FunSpec.builder("default")
       .addAnnotation(Imports.JUnit.test)
       .addCode(codeBuilder.build())
       .build()
