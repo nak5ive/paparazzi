@@ -2,6 +2,6 @@ apply plugin: 'org.jetbrains.kotlin.jvm'
 apply plugin: 'com.vanniktech.maven.publish'
 
 dependencies {
-  compileOnly files('../paparazzi/libs/compose-runtime-1.1.1.jar')
+  compileOnly files('../paparazzi/libs/compose-runtime-1.3.1.jar')
   implementation projects.paparazzi
 }
