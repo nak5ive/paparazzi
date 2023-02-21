@@ -2,16 +2,13 @@ package app.cash.paparazzi.annotation.processor
 
 import app.cash.paparazzi.annotation.processor.models.PaparazziModel
 import app.cash.paparazzi.annotation.processor.models.PreviewParamModel
-import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSNode
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.visitor.KSEmptyVisitor
 
-class PaparazziVisitor(
-  private val logger: KSPLogger
-) : KSEmptyVisitor<Unit, PaparazziModel?>() {
+class PaparazziVisitor : KSEmptyVisitor<Unit, PaparazziModel?>() {
 
   override fun defaultHandler(
     node: KSNode,

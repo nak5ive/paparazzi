@@ -2,7 +2,6 @@ package app.cash.paparazzi.annotation.processor
 
 import app.cash.paparazzi.annotation.api.Paparazzi
 import app.cash.paparazzi.annotation.processor.models.PaparazziModel
-import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
@@ -16,22 +15,15 @@ import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
 
 class PaparazziProcessorProvider : SymbolProcessorProvider {
-  override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
-    return PaparazziProcessor(
-      environment.options,
-      environment.logger
-    )
-  }
+  override fun create(environment: SymbolProcessorEnvironment) =
+    PaparazziProcessor(environment.options)
 }
 
-class PaparazziProcessor(
-  private val options: Map<String, String>,
-  private val logger: KSPLogger
-) : SymbolProcessor {
+class PaparazziProcessor(private val options: Map<String, String>) : SymbolProcessor {
   override fun process(resolver: Resolver): List<KSAnnotated> {
     return resolver.findPaparazziFunctions()
       .onEach { function ->
-        function.accept(PaparazziVisitor(logger), Unit)
+        function.accept(PaparazziVisitor(), Unit)
           ?.writeFile()
       }
       .filterNot { it.validate() }
@@ -41,7 +33,7 @@ class PaparazziProcessor(
   private fun Resolver.findPaparazziFunctions() =
     getSymbolsWithAnnotation("androidx.compose.runtime.Composable")
       .filterIsInstance<KSFunctionDeclaration>()
-      .filter { it.annotations.findPaparazzi().count() > 0 }
+      .filter { it.annotations.hasPaparazzi() }
 
   private fun PaparazziModel.writeFile() {
     val file = PaparazziPoet.buildFile(this)
@@ -58,33 +50,12 @@ class PaparazziProcessor(
 
   fun dirOf(packageName: String): String {
     val baseDir = options["paparazziTestDir"] + separator
-    val packageDirs = if (packageName != "") "${packageName.split(".").joinToString(separator)}$separator" else ""
+    val packageDirs =
+      if (packageName != "") "${packageName.split(".").joinToString(separator)}$separator" else ""
     return "$baseDir$packageDirs"
   }
 
-  /**
-   * when the same annotations are applied higher in the tree, an endless recursive lookup can occur.
-   * using a stack to keep to a record of each symbol lets us break when we hit one we've already encountered
-   *
-   * ie:
-   * @Bottom
-   * annotation class Top
-   *
-   * @Top
-   * annotation class Bottom
-   *
-   * @Bottom
-   * fun SomeFun()
-   */
-  private fun Sequence<KSAnnotation>.findPaparazzi(stack: Set<KSAnnotation> = setOf()): Sequence<KSAnnotation> {
-    val direct = filter { it.isPaparazzi() }
-    val indirect = filterNot { it.isPaparazzi() || stack.contains(it) }
-      .map { it.parentAnnotations().findPaparazzi(stack.plus(it)) }
-      .flatten()
-    return direct.plus(indirect)
-  }
-
-  private fun KSAnnotation.parentAnnotations() = declaration().annotations
+  private fun Sequence<KSAnnotation>.hasPaparazzi() = filter { it.isPaparazzi() }.count() > 0
 
   private fun KSAnnotation.isPaparazzi() =
     qualifiedName() == Paparazzi::class.qualifiedName.toString()
