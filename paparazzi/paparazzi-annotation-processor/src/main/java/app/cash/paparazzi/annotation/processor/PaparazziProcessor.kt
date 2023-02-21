@@ -10,6 +10,7 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.validate
+import com.squareup.kotlinpoet.FileSpec
 import java.io.File
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
@@ -20,6 +21,13 @@ class PaparazziProcessorProvider : SymbolProcessorProvider {
 }
 
 class PaparazziProcessor(private val options: Map<String, String>) : SymbolProcessor {
+
+  companion object {
+    const val OUTPUT_DIR_OPTION = "paparazziOutputDir"
+
+    private val separator = File.separator
+  }
+
   override fun process(resolver: Resolver): List<KSAnnotated> {
     return resolver.findPaparazziFunctions()
       .onEach { function ->
@@ -36,23 +44,22 @@ class PaparazziProcessor(private val options: Map<String, String>) : SymbolProce
       .filter { it.annotations.hasPaparazzi() }
 
   private fun PaparazziModel.writeFile() {
-    val file = PaparazziPoet.buildFile(this)
+    val fileSpec = PaparazziPoet.buildFile(this)
 
-    val outputPath = dirOf(file.packageName)
-    val outputDir = File(outputPath)
+    val outputDir = fileSpec.outputDirectory()
     outputDir.mkdirs()
-    val outputFile = File(outputDir, "${file.name}.kt")
+
+    val outputFile = File(outputDir, "${fileSpec.name}.kt")
     outputFile.createNewFile()
-    OutputStreamWriter(outputFile.outputStream(), StandardCharsets.UTF_8).use(file::writeTo)
+
+    OutputStreamWriter(outputFile.outputStream(), StandardCharsets.UTF_8).use(fileSpec::writeTo)
   }
 
-  private val separator = File.separator
-
-  fun dirOf(packageName: String): String {
-    val baseDir = options["paparazziTestDir"] + separator
+  private fun FileSpec.outputDirectory(): File {
+    val baseDir = options[OUTPUT_DIR_OPTION] + separator
     val packageDirs =
       if (packageName != "") "${packageName.split(".").joinToString(separator)}$separator" else ""
-    return "$baseDir$packageDirs"
+    return File("$baseDir$packageDirs")
   }
 
   private fun Sequence<KSAnnotation>.hasPaparazzi() = filter { it.isPaparazzi() }.count() > 0

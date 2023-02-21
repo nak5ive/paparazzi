@@ -27,7 +27,7 @@ android {
 }
 
 ksp {
-  arg("paparazziTestDir", "$projectDir/build/generated/source/paparazzi")
+  arg("paparazziOutputDir", "$projectDir/build/generated/source/paparazzi")
 }
 
 dependencies {
