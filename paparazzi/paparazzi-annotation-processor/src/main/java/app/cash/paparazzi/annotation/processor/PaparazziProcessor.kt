@@ -2,8 +2,6 @@ package app.cash.paparazzi.annotation.processor
 
 import app.cash.paparazzi.annotation.api.Paparazzi
 import app.cash.paparazzi.annotation.processor.models.PaparazziModel
-import com.google.devtools.ksp.processing.CodeGenerator
-import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
@@ -13,24 +11,28 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.validate
+import java.io.File
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
 
 class PaparazziProcessorProvider : SymbolProcessorProvider {
   override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor {
-    return PaparazziProcessor(environment.codeGenerator, environment.logger)
+    return PaparazziProcessor(
+      environment.options,
+      environment.logger
+    )
   }
 }
 
 class PaparazziProcessor(
-  private val codeGenerator: CodeGenerator,
+  private val options: Map<String, String>,
   private val logger: KSPLogger
 ) : SymbolProcessor {
   override fun process(resolver: Resolver): List<KSAnnotated> {
     return resolver.findPaparazziFunctions()
       .onEach { function ->
         function.accept(PaparazziVisitor(logger), Unit)
-          ?.writeFile(resolver)
+          ?.writeFile()
       }
       .filterNot { it.validate() }
       .toList()
@@ -41,13 +43,23 @@ class PaparazziProcessor(
       .filterIsInstance<KSFunctionDeclaration>()
       .filter { it.annotations.findPaparazzi().count() > 0 }
 
-  private fun PaparazziModel.writeFile(resolver: Resolver) {
-    val dependencies = Dependencies(false, *resolver.getAllFiles().toList().toTypedArray())
-
+  private fun PaparazziModel.writeFile() {
     val file = PaparazziPoet.buildFile(this)
 
-    val fileOS = codeGenerator.createNewFile(dependencies, file.packageName, file.name)
-    OutputStreamWriter(fileOS, StandardCharsets.UTF_8).use(file::writeTo)
+    val outputPath = dirOf(file.packageName)
+    val outputDir = File(outputPath)
+    outputDir.mkdirs()
+    val outputFile = File(outputDir, "${file.name}.kt")
+    outputFile.createNewFile()
+    OutputStreamWriter(outputFile.outputStream(), StandardCharsets.UTF_8).use(file::writeTo)
+  }
+
+  private val separator = File.separator
+
+  fun dirOf(packageName: String): String {
+    val baseDir = options["paparazziTestDir"] + separator
+    val packageDirs = if (packageName != "") "${packageName.split(".").joinToString(separator)}$separator" else ""
+    return "$baseDir$packageDirs"
   }
 
   /**

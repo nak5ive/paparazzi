@@ -21,7 +21,6 @@ import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.tasks.MergeSourceSetFolders
 import com.android.ide.common.symbols.getPackageNameFromManifest
-import com.google.devtools.ksp.gradle.KspGradleSubplugin
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
@@ -37,8 +36,6 @@ import org.gradle.api.logging.LogLevel.LIFECYCLE
 import org.gradle.api.plugins.JavaBasePlugin
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.PathSensitivity
-import org.gradle.api.tasks.Copy
-import org.gradle.api.tasks.Delete
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.options.Option
 import org.gradle.api.tasks.testing.Test
@@ -72,8 +69,6 @@ class PaparazziPlugin : Plugin<Project> {
   private fun setupPaparazzi(project: Project) {
     project.addTestDependency()
     val nativePlatformFileCollection = project.setupNativePlatformDependency()
-
-    project.setupAnnotationProcessor()
 
     // Create anchor tasks for all variants.
     val verifyVariants = project.tasks.register("verifyPaparazzi")
@@ -250,71 +245,6 @@ class PaparazziPlugin : Plugin<Project> {
     )
   }
 
-  private fun Project.setupAnnotationProcessor() {
-    // add KSP plugin to project
-    project.pluginManager.apply(KspGradleSubplugin::class.java)
-
-    // add required dependencies
-    project.dependencies.add("implementation", "app.cash.paparazzi:paparazzi-annotation:$VERSION")
-    project.dependencies.add("ksp", "app.cash.paparazzi:paparazzi-annotation-processor:$VERSION")
-
-    val android = project.extensions.getByType(LibraryExtension::class.java)
-
-    android.libraryVariants.all { variant ->
-      val typeName = variant.buildType.name
-      val typeCapped = typeName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
-
-      val mainKspOutputDir = "$KSP_OUTPUT_DIR/$typeName/kotlin"
-      val testSourceDir = "$TEST_SOURCE_DIR/${typeName}UnitTest"
-
-      android.sourceSets.getByName("test$typeCapped").java {
-        srcDir(testSourceDir)
-      }
-
-      // step 1
-      project.tasks.register("paparazziClean${typeCapped}UnitTest", Delete::class.java) { task ->
-        task.description = "Deletes previously generated paparazzi test files from test dir"
-        task.delete(project.fileTree(testSourceDir))
-      }
-
-      // step 2
-      project.tasks.register("paparazziCopySource$typeCapped", Copy::class.java) { task ->
-        task.description = "Copies newly generated paparazzi test files from ksp build dir to test directory"
-        task.from(mainKspOutputDir)
-        task.into(testSourceDir)
-        task.include(FILE_PATTERN)
-      }
-
-      // step 3
-      project.tasks.register("paparazziClean$typeCapped", Delete::class.java) { task ->
-        task.description = "Deletes generated paparazzi test files from main build dir"
-        val fileTree = project.fileTree(mainKspOutputDir) {
-          it.include(FILE_PATTERN)
-        }
-        task.delete(fileTree)
-      }
-    }
-
-    project.afterEvaluate {
-      android.libraryVariants.all { variant ->
-        val typeName = variant.buildType.name
-        val typeCapped = typeName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
-
-        // wire task graph
-        project.tasks.findByName("ksp${typeCapped}Kotlin")?.finalizedBy("paparazziClean$typeCapped")
-        project.tasks.findByName("paparazziClean${typeCapped}UnitTest")?.mustRunAfter("ksp${typeCapped}Kotlin")
-        project.tasks.findByName("paparazziCopySource$typeCapped")?.dependsOn("paparazziClean${typeCapped}UnitTest")
-        project.tasks.findByName("paparazziClean$typeCapped")?.dependsOn("paparazziCopySource$typeCapped")
-        project.tasks.findByName("compile${typeCapped}Kotlin")?.mustRunAfter("paparazziClean$typeCapped")
-
-        // Kapt tries to stub generated files before the compile task, this ensures that the generated tests are cleaned up before.
-        if (project.pluginManager.hasPlugin("org.jetbrains.kotlin.kapt")) {
-          project.tasks.findByName("kaptGenerateStubs${typeCapped}Kotlin")?.mustRunAfter("paparazziClean$typeCapped")
-        }
-      }
-    }
-  }
-
   private fun BaseExtension.packageName(): String {
     namespace?.let { return it }
 
@@ -350,8 +280,3 @@ private fun DirectoryProperty.asRelativePathString(child: Provider<Directory>): 
 //  acceptable as the minimum supported version
 private val ARTIFACT_TYPE_ATTRIBUTE = Attribute.of("artifactType", String::class.java)
 private const val DEFAULT_COMPILE_SDK_VERSION = 33
-
-// annotation processor
-private const val KSP_OUTPUT_DIR = "build/generated/ksp"
-private const val TEST_SOURCE_DIR = "build/generated/source/paparazzi"
-private const val FILE_PATTERN = "**/Paparazzi_*"

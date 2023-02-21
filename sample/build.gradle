@@ -1,3 +1,7 @@
+plugins {
+  id("com.google.devtools.ksp") version "1.7.20-1.0.8"
+}
+
 apply plugin: 'com.android.library'
 apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: 'app.cash.paparazzi'
@@ -16,12 +20,23 @@ android {
   composeOptions {
     kotlinCompilerExtensionVersion libs.versions.composeCompiler.get()
   }
+
+  sourceSets {
+    test.java.srcDir 'build/generated/source/paparazzi'
+  }
+}
+
+ksp {
+  arg("paparazziTestDir", "$projectDir/build/generated/source/paparazzi")
 }
 
 dependencies {
   implementation 'androidx.compose.ui:ui:1.3.1'
   implementation 'androidx.compose.ui:ui-tooling:1.3.1'
   implementation libs.composeUi.material
+
+  implementation "app.cash.paparazzi:paparazzi-annotation"
+  ksp "app.cash.paparazzi:paparazzi-annotation-processor"
 
   testImplementation libs.testParameterInjector
 }
