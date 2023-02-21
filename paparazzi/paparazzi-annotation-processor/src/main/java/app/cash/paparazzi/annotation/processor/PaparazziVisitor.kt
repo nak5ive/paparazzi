@@ -27,7 +27,7 @@ class PaparazziVisitor : KSEmptyVisitor<Unit, PaparazziModel?>() {
           type = it.type(),
           provider = it.previewParamProvider()
         )
-      },
+      }
     )
   }
 
