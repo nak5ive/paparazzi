@@ -1,0 +1,7 @@
+apply plugin: 'org.jetbrains.kotlin.jvm'
+
+if (rootProject.name == 'paparazzi-root') {
+  apply plugin: 'com.vanniktech.maven.publish'
+}
+
+dependencies {}

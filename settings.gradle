@@ -7,6 +7,8 @@ include ':libs:native-win'
 include ':libs:native-linux'
 include ':paparazzi'
 include ':paparazzi-agent'
+include ':paparazzi-annotation'
+include ':paparazzi-annotation-processor'
 include ':paparazzi-gradle-plugin'
 
 include ':sample'
@@ -15,6 +17,8 @@ enableFeaturePreview('TYPESAFE_PROJECT_ACCESSORS')
 
 includeBuild('build-logic') {
   dependencySubstitution {
+    substitute module('app.cash.paparazzi:paparazzi-annotation') using project(':paparazzi-annotation')
+    substitute module('app.cash.paparazzi:paparazzi-annotation-processor') using project(':paparazzi-annotation-processor')
     substitute module('app.cash.paparazzi:paparazzi-gradle-plugin') using project(':paparazzi-gradle-plugin')
   }
 }
