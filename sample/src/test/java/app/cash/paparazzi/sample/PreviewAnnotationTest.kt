@@ -1,13 +1,14 @@
 package app.cash.paparazzi.sample
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.currentComposer
 import androidx.compose.runtime.reflect.getDeclaredComposableMethod
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import app.cash.paparazzi.Paparazzi
+import app.cash.paparazzi.annotation.paparazziManifest
+import app.cash.paparazzi.annotation.paparazziManifestTest
 import org.junit.Rule
 import org.junit.Test
-import java.io.BufferedReader
-import java.io.File
 
 class PreviewAnnotationTest {
 
@@ -19,17 +20,14 @@ class PreviewAnnotationTest {
   }
 }
 
+@app.cash.paparazzi.annotation.api.Paparazzi
+@Composable
+fun HelloPaparazziTest() {
+  HelloPaparazzi("I'm just a test")
+}
+
 fun Paparazzi.annotationSnapshots() {
-  // val bufferedReader: BufferedReader = File("../example.txt").bufferedReader()
-  // val inputString = bufferedReader.use { it.readText() }
-
-  // TODO read manifest from annotation output dir
-  val rawManifest = """
-      app.cash.paparazzi.sample.HelloPaparazziKt,HelloPaparazziPreview,,
-      app.cash.paparazzi.sample.HelloPaparazziKt,HelloPaparazziPreview,kotlin.String,app.cash.paparazzi.sample.TextProvider
-    """.trimIndent()
-
-  val manifest = Manifest.deserialize(rawManifest)
+  val manifest = Manifest.deserialize(paparazziManifest + paparazziManifestTest)
   manifest.previews.forEach { preview ->
     val clazz = Class.forName(preview.className)
 
@@ -92,6 +90,7 @@ data class Manifest(
 
   companion object {
     fun deserialize(rawManifest: String) = rawManifest.lines()
+        .filter { it.isNotEmpty() }
         .map {
           it.split(",").let { parts ->
             PreviewMethod(

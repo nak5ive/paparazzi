@@ -5,5 +5,7 @@ if (rootProject.name == 'paparazzi-root') {
 }
 
 dependencies {
+  implementation libs.kotlinPoet.core
+  implementation libs.kotlinPoet.ksp
   implementation libs.ksp.api
 }
