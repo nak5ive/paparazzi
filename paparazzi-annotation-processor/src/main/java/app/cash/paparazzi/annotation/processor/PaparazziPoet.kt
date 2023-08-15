@@ -67,13 +67,14 @@ object PaparazziPoet {
 
           addStatement("$DATA_CLASS_NAME(")
           indent()
+          addStatement("packageName = %S,", functionClassName.packageName)
           addStatement("name = %S,", functionClassName.simpleName)
           if (previewParam != null) {
-            addStatement("method = { %T(it as %T) },", functionClassName, paramType)
+            addStatement("composable = { %T(it as %T) },", functionClassName, paramType)
             addStatement("previewParameterName = %S,", paramName)
             addStatement("previewParameterProvider = %T(),", paramProvider)
           } else {
-            addStatement("method = { %T() },", functionClassName)
+            addStatement("composable = { %T() },", functionClassName)
           }
           unindent()
           addStatement("),")

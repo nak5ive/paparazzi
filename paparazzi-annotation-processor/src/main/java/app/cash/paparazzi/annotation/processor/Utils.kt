@@ -6,8 +6,9 @@ const val DATA_CLASS_NAME = "PaparazziAnnotationData"
 
 val dataClassDefinition = """
     data class $DATA_CLASS_NAME(
+      val packageName: String,
       val name: String,
-      val method: (@%T (Any?) -> Unit),
+      val composable: (@%T (Any?) -> Unit),
       val previewParameterName: String? = null,
       val previewParameterProvider: %T<out Any>? = null,
     )
@@ -19,12 +20,12 @@ val snapshotDefinition = """
         if (it.previewParameterProvider != null) {
           it.previewParameterProvider!!.values.forEachIndexed { i, value ->
             snapshot("${'$'}{it.name}[${'$'}{it.previewParameterName}${'$'}i]") {
-              it.method.invoke(value)
+              it.composable.invoke(value)
             }
           }
         } else {
           snapshot(it.name) {
-            it.method.invoke(null)
+            it.composable.invoke(null)
           }
         }
       }
