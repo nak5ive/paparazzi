@@ -26,8 +26,6 @@ import com.android.build.gradle.internal.dsl.BaseAppModuleExtension
 import com.android.build.gradle.internal.dsl.DynamicFeatureExtension
 import com.android.build.gradle.internal.publishing.AndroidArtifacts.ArtifactType
 import com.android.build.gradle.tasks.MergeSourceSetFolders
-import com.google.devtools.ksp.gradle.KspExtension
-import com.google.devtools.ksp.gradle.KspGradleSubplugin
 import org.gradle.api.DefaultTask
 import org.gradle.api.DomainObjectSet
 import org.gradle.api.Plugin
@@ -41,21 +39,17 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.artifacts.transform.UnzipTransform
 import org.gradle.api.logging.LogLevel.LIFECYCLE
 import org.gradle.api.plugins.JavaBasePlugin
-import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.provider.Provider
 import org.gradle.api.reporting.ReportingExtension
 import org.gradle.api.tasks.PathSensitivity
-import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.options.Option
 import org.gradle.api.tasks.testing.Test
 import org.gradle.internal.os.OperatingSystem
 import org.gradle.language.base.plugins.LifecycleBasePlugin.VERIFICATION_GROUP
-import org.gradle.process.CommandLineArgumentProvider
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinAndroidPluginWrapper
 import org.jetbrains.kotlin.gradle.plugin.KotlinMultiplatformPluginWrapper
-import org.jetbrains.kotlin.gradle.plugin.extraProperties
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinAndroidTarget
 import java.util.Locale
 import kotlin.io.path.invariantSeparatorsPathString
@@ -313,24 +307,6 @@ class PaparazziPlugin : Plugin<Project> {
     }
     configurations.getByName("testImplementation").dependencies.add(dependency)
   }
-
-  // private fun Project.addAnnotationDependencies() {
-  //   pluginManager.apply(KspGradleSubplugin::class.java)
-  //
-  //   val api = if (isInternal()) {
-  //     dependencies.project(mapOf("path" to ":paparazzi-annotation"))
-  //   } else {
-  //     dependencies.create("app.cash.paparazzi:paparazzi-annotation:$VERSION")
-  //   }
-  //   configurations.getByName("implementation").dependencies.add(api)
-  //
-  //   val processor = if (isInternal()) {
-  //     dependencies.project(mapOf("path" to ":paparazzi-annotation-processor"))
-  //   } else {
-  //     dependencies.create("app.cash.paparazzi:paparazzi-annotation-processor:$VERSION")
-  //   }
-  //   configurations.getByName("ksp").dependencies.add(processor)
-  // }
 
   private fun Project.isInternal(): Boolean {
     return properties["app.cash.paparazzi.internal"].toString() == "true"
