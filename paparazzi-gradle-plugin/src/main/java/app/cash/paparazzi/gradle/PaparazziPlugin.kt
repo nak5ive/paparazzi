@@ -101,7 +101,6 @@ class PaparazziPlugin : Plugin<Project> {
 
   private fun <T> setupPaparazzi(project: Project, variants: DomainObjectSet<T>) where T : BaseVariant, T : TestedVariant {
     project.addTestDependency()
-    // project.addAnnotationDependencies()
     val nativePlatformFileCollection = project.setupNativePlatformDependency()
 
     // Create anchor tasks for all variants.
