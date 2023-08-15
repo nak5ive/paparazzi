@@ -65,11 +65,7 @@ private fun KSAnnotation.qualifiedName() = declaration().qualifiedName?.asString
 private fun KSAnnotation.declaration() = annotationType.resolve().declaration
 
 private fun SymbolProcessorEnvironment.collectProjectInfo(dependencies: Dependencies, fileName: String): ProjectInfo {
-  codeGenerator.createNewFileByPath(
-    dependencies = dependencies,
-    path = fileName,
-    extensionName = "txt",
-  )
+  codeGenerator.createNewFileByPath(dependencies, fileName, "txt")
   return codeGenerator.generatedFile.first().run {
     val path = absolutePath
 
