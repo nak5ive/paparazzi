@@ -1,9 +1,7 @@
 package app.cash.paparazzi.annotation.processor
 
-import app.cash.paparazzi.annotation.processor.PaparazziProcessor.Companion
-import com.google.devtools.ksp.processing.CodeGenerator
+import com.google.devtools.ksp.getVisibility
 import com.google.devtools.ksp.processing.Dependencies
-import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.processing.SymbolProcessorEnvironment
@@ -12,58 +10,44 @@ import com.google.devtools.ksp.symbol.FunctionKind.TOP_LEVEL
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.Visibility.PUBLIC
+import com.google.devtools.ksp.symbol.Visibility.INTERNAL
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ksp.writeTo
-import java.io.File
-import java.io.OutputStreamWriter
-import java.nio.charset.StandardCharsets
 
 class PaparazziProcessorProvider : SymbolProcessorProvider {
-  override fun create(environment: SymbolProcessorEnvironment) = PaparazziProcessor(
-    environment.codeGenerator,
-    environment.options,
-    environment.logger
-  )
+  override fun create(environment: SymbolProcessorEnvironment) = PaparazziProcessor(environment)
 }
 
 class PaparazziProcessor(
-  private val codeGenerator: CodeGenerator,
-  private val options: Map<String, String>,
-  private val logger: KSPLogger,
+  private val environment: SymbolProcessorEnvironment,
 ) : SymbolProcessor {
 
-  var invoked = false
-
-  companion object {
-    const val ANNOTATION_NAME = "app.cash.paparazzi.annotation.api.Paparazzi"
-  }
+  private var invoked = false
 
   override fun process(resolver: Resolver): List<KSAnnotated> {
-    if (invoked) {
-      return emptyList()
-    }
+    if (invoked) return emptyList()
     invoked = true
 
-    val projectInfo = codeGenerator.collectProjectInfo()
+    val dependencies = Dependencies(true, *resolver.getAllFiles().toList().toTypedArray())
+    val projectInfo = environment.collectProjectInfo(dependencies, PACKAGE_NAME)
 
-    val manifestLocation = projectInfo.buildDir + File.separator +
-      "generated" + File.separator +
-      "paparazzi" + File.separator +
-      projectInfo.variantName + "UnitTest"
-
-    val manifestDir = File(manifestLocation).apply { mkdirs() }
+    environment.logger.info("PAPARAZZI - running in ${projectInfo.variantName}")
 
     return resolver.findPaparazziFunctions()
       .also {
-        val fileSpec = PaparazziPoet.buildFile(projectInfo, it)
-
-        val manifestFile = File(manifestDir, "${fileSpec.name}.kt").apply { createNewFile() }
-        OutputStreamWriter(manifestFile.outputStream(), StandardCharsets.UTF_8).use(fileSpec::writeTo)
+        environment.logger.info("PAPARAZZI - found ${it.count()} annotated function(s)")
+        if (projectInfo.isTest) {
+          PaparazziPoet.buildTestFiles(it)
+        } else {
+          PaparazziPoet.buildDefaultFiles(it)
+        }.forEach { file ->
+          file.writeTo(environment.codeGenerator, dependencies)
+        }
       }
       .filterNot { it.validate() }
       .toList()
   }
-
 }
 
 private fun Resolver.findPaparazziFunctions() =
@@ -71,32 +55,35 @@ private fun Resolver.findPaparazziFunctions() =
     .filterIsInstance<KSFunctionDeclaration>()
     .filter {
       it.annotations.hasPaparazzi() &&
-        it.functionKind == TOP_LEVEL
+        it.functionKind == TOP_LEVEL &&
+        it.getVisibility() in listOf(PUBLIC, INTERNAL)
     }
 
 private fun Sequence<KSAnnotation>.hasPaparazzi() = filter { it.isPaparazzi() }.count() > 0
-private fun KSAnnotation.isPaparazzi() = qualifiedName() == PaparazziProcessor.ANNOTATION_NAME
+private fun KSAnnotation.isPaparazzi() = qualifiedName() == ANNOTATION_QUALIFIED_NAME
 private fun KSAnnotation.qualifiedName() = declaration().qualifiedName?.asString() ?: ""
 private fun KSAnnotation.declaration() = annotationType.resolve().declaration
 
-private fun CodeGenerator.collectProjectInfo(): ProjectInfo {
-  createNewFileByPath(Dependencies(false), "app.cash.paparazzi", "annotation")
-  return generatedFile.first().run {
+private fun SymbolProcessorEnvironment.collectProjectInfo(dependencies: Dependencies, fileName: String): ProjectInfo {
+  codeGenerator.createNewFileByPath(
+    dependencies = dependencies,
+    path = fileName,
+    extensionName = "txt",
+  )
+  return codeGenerator.generatedFile.first().run {
     val path = absolutePath
 
-    val variantRegex = Regex("ksp/(.+?)(UnitTest)?/resources")
-    val (variantName, testName) = variantRegex.find(path)!!.destructured
+    val variantRegex = Regex("ksp/(.+)/resources")
+    val (variantName) = variantRegex.find(path)!!.destructured
 
     ProjectInfo(
-      buildDir = path.substring(0, path.indexOf("/generated")),
       variantName = variantName,
-      isTest = testName.isNotEmpty(),
+      isTest = variantName.endsWith("UnitTest"),
     ).also { writeText("$it") }
   }
 }
 
 data class ProjectInfo(
-  val buildDir: String,
   val variantName: String,
   val isTest: Boolean,
 )

@@ -107,7 +107,7 @@ class PaparazziPlugin : Plugin<Project> {
 
   private fun <T> setupPaparazzi(project: Project, variants: DomainObjectSet<T>) where T : BaseVariant, T : TestedVariant {
     project.addTestDependency()
-    project.addAnnotationDependencies()
+    // project.addAnnotationDependencies()
     val nativePlatformFileCollection = project.setupNativePlatformDependency()
 
     // Create anchor tasks for all variants.
@@ -314,23 +314,23 @@ class PaparazziPlugin : Plugin<Project> {
     configurations.getByName("testImplementation").dependencies.add(dependency)
   }
 
-  private fun Project.addAnnotationDependencies() {
-    pluginManager.apply(KspGradleSubplugin::class.java)
-
-    val api = if (isInternal()) {
-      dependencies.project(mapOf("path" to ":paparazzi-annotation"))
-    } else {
-      dependencies.create("app.cash.paparazzi:paparazzi-annotation:$VERSION")
-    }
-    configurations.getByName("implementation").dependencies.add(api)
-
-    val processor = if (isInternal()) {
-      dependencies.project(mapOf("path" to ":paparazzi-annotation-processor"))
-    } else {
-      dependencies.create("app.cash.paparazzi:paparazzi-annotation-processor:$VERSION")
-    }
-    configurations.getByName("ksp").dependencies.add(processor)
-  }
+  // private fun Project.addAnnotationDependencies() {
+  //   pluginManager.apply(KspGradleSubplugin::class.java)
+  //
+  //   val api = if (isInternal()) {
+  //     dependencies.project(mapOf("path" to ":paparazzi-annotation"))
+  //   } else {
+  //     dependencies.create("app.cash.paparazzi:paparazzi-annotation:$VERSION")
+  //   }
+  //   configurations.getByName("implementation").dependencies.add(api)
+  //
+  //   val processor = if (isInternal()) {
+  //     dependencies.project(mapOf("path" to ":paparazzi-annotation-processor"))
+  //   } else {
+  //     dependencies.create("app.cash.paparazzi:paparazzi-annotation-processor:$VERSION")
+  //   }
+  //   configurations.getByName("ksp").dependencies.add(processor)
+  // }
 
   private fun Project.isInternal(): Boolean {
     return properties["app.cash.paparazzi.internal"].toString() == "true"

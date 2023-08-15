@@ -64,7 +64,7 @@ fun HelloPaparazziPreview() {
 @Paparazzi
 @Preview
 @Composable
-fun HelloPaparazziPreview(@PreviewParameter(TextProvider::class) text: String) {
+internal fun HelloPaparazziPreview(@PreviewParameter(TextProvider::class) text: String) {
   HelloPaparazzi(
     text = text,
   )

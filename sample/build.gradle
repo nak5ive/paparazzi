@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: 'app.cash.paparazzi'
+apply plugin: 'com.google.devtools.ksp'
 
 
 android {
@@ -21,16 +22,14 @@ android {
   composeOptions {
     kotlinCompilerExtensionVersion libs.versions.composeCompiler.get()
   }
-  sourceSets {
-    debug {
-      test.java.srcDirs += "build/generated/paparazzi/debugUnitTest"
-    }
-  }
 }
 
 dependencies {
   implementation libs.composeUi.material
   implementation libs.composeUi.uiTooling
+
+  implementation projects.paparazziAnnotation
+  ksp projects.paparazziAnnotationProcessor
 
   testImplementation libs.testParameterInjector
 }
