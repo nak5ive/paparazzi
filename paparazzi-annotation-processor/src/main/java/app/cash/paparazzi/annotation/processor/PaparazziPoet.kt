@@ -1,5 +1,6 @@
 package app.cash.paparazzi.annotation.processor
 
+import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSValueParameter
@@ -23,19 +24,16 @@ object PaparazziPoet {
 
   private fun buildDataClassFile() =
     FileSpec.scriptBuilder(DATA_CLASS_FILE_NAME, PACKAGE_NAME)
-      .addCode(
-        dataClassFileDefinition,
-        ClassName("androidx.compose.runtime", "Composable"),
-        ClassName("androidx.compose.ui.tooling.preview", "PreviewParameterProvider"),
-      )
+      .addImport("androidx.compose.runtime", "Composable")
+      .addImport("androidx.compose.ui.tooling.preview", "PreviewParameterProvider")
+      .addCode(dataClassFileDefinition)
       .build()
 
   private fun buildSnapshotFile() =
     FileSpec.scriptBuilder(SNAPSHOT_FILE_NAME, PACKAGE_NAME)
-      .addCode(
-        snapshotFileDefinition,
-        ClassName("app.cash.paparazzi", "Paparazzi")
-      )
+      .addImport("androidx.compose.runtime", "Composable")
+      .addImport("app.cash.paparazzi", "Paparazzi")
+      .addCode(snapshotFileDefinition)
       .build()
 
   private fun buildAnnotationsFile(functions: Sequence<KSFunctionDeclaration>, fileName: String, valueName: String) =
@@ -52,6 +50,11 @@ object PaparazziPoet {
             val functionClassName = ClassName(func.packageName.asString(), func.simpleName.asString())
             addStatement("packageName = %S,", functionClassName.packageName)
             addStatement("name = %S,", functionClassName.simpleName)
+
+            val preview = func.preview()
+            if (preview != null) {
+              addStatement("previewName = %S,", preview.previewArg("name", ""))
+            }
 
             val previewParam = func.previewParam()
             if (previewParam != null) {
@@ -75,6 +78,13 @@ object PaparazziPoet {
   private fun KSFunctionDeclaration.previewParam() = parameters.firstOrNull { param ->
     param.annotations.any { it.shortName.asString() == "PreviewParameter" }
   }
+
+  private fun KSFunctionDeclaration.preview() = annotations
+    .firstOrNull { it.qualifiedName() == "androidx.compose.ui.tooling.preview.Preview" }
+
+  private fun <T> KSAnnotation.previewArg(name: String, default: T): T = arguments
+    .firstOrNull { it.name?.asString() == name }
+    ?.let { it.value as T } ?: default
 
   private fun KSValueParameter.previewParamProviderClassName() = annotations
     .first { it.shortName.asString() == "PreviewParameter" }

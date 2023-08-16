@@ -59,10 +59,10 @@ private fun Resolver.findPaparazziFunctions() =
         it.getVisibility() in listOf(PUBLIC, INTERNAL)
     }
 
-private fun Sequence<KSAnnotation>.hasPaparazzi() = filter { it.isPaparazzi() }.count() > 0
-private fun KSAnnotation.isPaparazzi() = qualifiedName() == ANNOTATION_QUALIFIED_NAME
-private fun KSAnnotation.qualifiedName() = declaration().qualifiedName?.asString() ?: ""
-private fun KSAnnotation.declaration() = annotationType.resolve().declaration
+fun Sequence<KSAnnotation>.hasPaparazzi() = filter { it.isPaparazzi() }.count() > 0
+fun KSAnnotation.isPaparazzi() = qualifiedName() == ANNOTATION_QUALIFIED_NAME
+fun KSAnnotation.qualifiedName() = declaration().qualifiedName?.asString() ?: ""
+fun KSAnnotation.declaration() = annotationType.resolve().declaration
 
 private fun SymbolProcessorEnvironment.collectProjectInfo(dependencies: Dependencies, fileName: String): ProjectInfo {
   codeGenerator.createNewFileByPath(dependencies, fileName, "txt")

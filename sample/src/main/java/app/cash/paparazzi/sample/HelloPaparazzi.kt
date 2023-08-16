@@ -53,7 +53,7 @@ fun HelloPaparazzi(
 }
 
 @Paparazzi
-@Preview
+@Preview(name = "basic preview")
 @Composable
 fun HelloPaparazziPreview() {
   HelloPaparazzi(
