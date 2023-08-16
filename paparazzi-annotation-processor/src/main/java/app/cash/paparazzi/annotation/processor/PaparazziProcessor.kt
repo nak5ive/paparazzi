@@ -40,7 +40,7 @@ class PaparazziProcessor(
         if (projectInfo.isTest) {
           PaparazziPoet.buildTestFiles(it)
         } else {
-          PaparazziPoet.buildDefaultFiles(it)
+          PaparazziPoet.buildPreviewFiles(it)
         }.forEach { file ->
           file.writeTo(environment.codeGenerator, dependencies)
         }

@@ -4,95 +4,88 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.CodeBlock
 import com.squareup.kotlinpoet.FileSpec
+import com.squareup.kotlinpoet.buildCodeBlock
 
 object PaparazziPoet {
 
-  fun buildDefaultFiles(functions: Sequence<KSFunctionDeclaration>) =
+  fun buildPreviewFiles(functions: Sequence<KSFunctionDeclaration>) =
     listOf(
       buildDataClassFile(),
-      buildAnnotationsFile(functions, false),
+      buildAnnotationsFile(functions, PREVIEW_ANNOTATIONS_FILE_NAME, PREVIEW_ANNOTATIONS_VALUE_NAME),
     )
 
   fun buildTestFiles(functions: Sequence<KSFunctionDeclaration>) =
     listOf(
+      buildAnnotationsFile(functions, TEST_ANNOTATIONS_FILE_NAME, TEST_ANNOTATIONS_VALUE_NAME),
       buildSnapshotFile(),
-      buildAnnotationsFile(functions, true),
     )
 
   private fun buildDataClassFile() =
-    FileSpec.scriptBuilder(DATA_CLASS_NAME, PACKAGE_NAME)
-      .addStatement(
-        dataClassDefinition,
+    FileSpec.scriptBuilder(DATA_CLASS_FILE_NAME, PACKAGE_NAME)
+      .addCode(
+        dataClassFileDefinition,
         ClassName("androidx.compose.runtime", "Composable"),
         ClassName("androidx.compose.ui.tooling.preview", "PreviewParameterProvider"),
       )
       .build()
 
-  private fun buildAnnotationsFile(functions: Sequence<KSFunctionDeclaration>, isTest: Boolean) =
-    FileSpec.scriptBuilder(if (isTest) "testAnnotations" else "annotations", PACKAGE_NAME)
-      .addManifest(functions, isTest)
-      .apply {
-        if (isTest) {
-          addStatement("")
-          addManifestCombination()
-        }
-      }
-      .build()
-
   private fun buildSnapshotFile() =
-    FileSpec.scriptBuilder("snapshot", PACKAGE_NAME)
-      .addStatement(
-        snapshotDefinition,
+    FileSpec.scriptBuilder(SNAPSHOT_FILE_NAME, PACKAGE_NAME)
+      .addCode(
+        snapshotFileDefinition,
         ClassName("app.cash.paparazzi", "Paparazzi")
       )
       .build()
 
-  private fun FileSpec.Builder.addManifest(functions: Sequence<KSFunctionDeclaration>, isTest: Boolean) =
-    addCode(CodeBlock.builder()
-      .addStatement("val paparazzi${if (isTest) "Test" else "Preview"}Annotations = listOf<$DATA_CLASS_NAME>(")
-      .indent()
-      .apply {
-        functions.forEach { func ->
-          val functionClassName = ClassName(func.packageName.asString(), func.simpleName.asString())
-          val previewParam = func.previewParam()
-          val paramName = previewParam?.name?.asString()
-          val paramType = previewParam?.type?.resolve()?.declaration?.qualifiedName?.let {
-            ClassName(it.getQualifier(), it.getShortName())
-          }
-          val paramProvider = previewParam?.previewParamProvider()?.declaration?.qualifiedName?.let {
-            ClassName(it.getQualifier(), it.getShortName())
-          }
-
-          addStatement("$DATA_CLASS_NAME(")
+  private fun buildAnnotationsFile(functions: Sequence<KSFunctionDeclaration>, fileName: String, valueName: String) =
+    FileSpec.scriptBuilder(fileName, PACKAGE_NAME)
+      .addCode(
+        buildCodeBlock {
+          addStatement("val $valueName = listOf<$DATA_CLASS_FILE_NAME>(")
           indent()
-          addStatement("packageName = %S,", functionClassName.packageName)
-          addStatement("name = %S,", functionClassName.simpleName)
-          if (previewParam != null) {
-            addStatement("composable = { %T(it as %T) },", functionClassName, paramType)
-            addStatement("previewParameterName = %S,", paramName)
-            addStatement("previewParameterProvider = %T(),", paramProvider)
-          } else {
-            addStatement("composable = { %T() },", functionClassName)
-          }
-          unindent()
-          addStatement("),")
-        }
-      }
-      .unindent()
-      .addStatement(")")
-      .build())
 
-  private fun FileSpec.Builder.addManifestCombination() = addStatement("val paparazziAnnotations = paparazziPreviewAnnotations + paparazziTestAnnotations")
+          functions.forEach { func ->
+            addStatement("$DATA_CLASS_FILE_NAME(")
+            indent()
+
+            val functionClassName = ClassName(func.packageName.asString(), func.simpleName.asString())
+            addStatement("packageName = %S,", functionClassName.packageName)
+            addStatement("name = %S,", functionClassName.simpleName)
+
+            val previewParam = func.previewParam()
+            if (previewParam != null) {
+              addStatement("composable = { %T(it as %T) },", functionClassName, previewParam.previewParamTypeClassName())
+              addStatement("previewParameterName = %S,", previewParam.name?.asString())
+              addStatement("previewParameterProvider = %T(),", previewParam.previewParamProviderClassName())
+            } else {
+              addStatement("composable = { %T() },", functionClassName)
+            }
+
+            unindent()
+            addStatement("),")
+          }
+
+          unindent()
+          addStatement(")")
+        }
+      )
+      .build()
 
   private fun KSFunctionDeclaration.previewParam() = parameters.firstOrNull { param ->
     param.annotations.any { it.shortName.asString() == "PreviewParameter" }
   }
 
-  private fun KSValueParameter.previewParamProvider() = annotations
+  private fun KSValueParameter.previewParamProviderClassName() = annotations
     .first { it.shortName.asString() == "PreviewParameter" }
     .arguments
     .first { arg -> arg.name?.asString() == "provider" }
     .let { it.value as KSType }
+    .declaration.qualifiedName?.let {
+    ClassName(it.getQualifier(), it.getShortName())
+  }
+
+  private fun KSValueParameter.previewParamTypeClassName() = type.resolve().declaration.qualifiedName?.let {
+    ClassName(it.getQualifier(), it.getShortName())
+  }
 }
