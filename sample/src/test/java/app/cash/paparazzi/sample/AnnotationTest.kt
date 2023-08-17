@@ -26,8 +26,10 @@ class AnnotationTest(
     NORMAL(1.0f), LARGE(2.0f)
   }
 
+  val deviceConfig = DeviceConfig.PIXEL_3.copy(fontScale = fontScale.scale)
+
   @get:Rule val paparazzi = Paparazzi(
-    deviceConfig = DeviceConfig.PIXEL_3.copy(fontScale = fontScale.scale)
+    deviceConfig = deviceConfig
   )
 
   @Test

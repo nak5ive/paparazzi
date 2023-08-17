@@ -62,7 +62,8 @@ fun HelloPaparazziPreview() {
 }
 
 @Paparazzi
-@Preview
+@Preview(name = "normal", fontScale = 1f)
+@Preview(name = "large", fontScale = 2f)
 @Composable
 internal fun HelloPaparazziPreview(@PreviewParameter(TextProvider::class) text: String) {
   HelloPaparazzi(

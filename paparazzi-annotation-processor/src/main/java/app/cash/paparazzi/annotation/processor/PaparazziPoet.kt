@@ -23,10 +23,10 @@ object PaparazziPoet {
     )
 
   private fun buildDataClassFile() =
-    FileSpec.scriptBuilder(DATA_CLASS_FILE_NAME, PACKAGE_NAME)
+    FileSpec.scriptBuilder(METADATA_FILE_NAME, PACKAGE_NAME)
       .addImport("androidx.compose.runtime", "Composable")
       .addImport("androidx.compose.ui.tooling.preview", "PreviewParameterProvider")
-      .addCode(dataClassFileDefinition)
+      .addCode(metadataFileDefinition)
       .build()
 
   private fun buildSnapshotFile() =
@@ -40,29 +40,54 @@ object PaparazziPoet {
     FileSpec.scriptBuilder(fileName, PACKAGE_NAME)
       .addCode(
         buildCodeBlock {
-          addStatement("val $valueName = listOf<$DATA_CLASS_FILE_NAME>(")
+          addStatement("val $valueName = listOf<PaparazziAnnotationData>(")
           indent()
 
           functions.forEach { func ->
-            addStatement("$DATA_CLASS_FILE_NAME(")
+            addStatement("PaparazziAnnotationData(")
             indent()
 
             val functionClassName = ClassName(func.packageName.asString(), func.simpleName.asString())
             addStatement("packageName = %S,", functionClassName.packageName)
-            addStatement("name = %S,", functionClassName.simpleName)
+            addStatement("functionName = %S,", functionClassName.simpleName)
 
-            val preview = func.preview()
-            if (preview != null) {
-              addStatement("previewName = %S,", preview.previewArg("name", ""))
-            }
-
+            val previews = func.previews()
             val previewParam = func.previewParam()
+
             if (previewParam != null) {
               addStatement("composable = { %T(it as %T) },", functionClassName, previewParam.previewParamTypeClassName())
-              addStatement("previewParameterName = %S,", previewParam.name?.asString())
-              addStatement("previewParameterProvider = %T(),", previewParam.previewParamProviderClassName())
+              addStatement("previewParameter = PreviewParameterData(")
+              indent()
+              addStatement("name = %S,", previewParam.name?.asString())
+              addStatement("provider = %T(),", previewParam.previewParamProviderClassName())
+              unindent()
+              addStatement("),")
             } else {
               addStatement("composable = { %T() },", functionClassName)
+            }
+
+            if (previews.isNotEmpty()) {
+              addStatement("previews = listOf(")
+              indent()
+
+              previews.forEach { preview ->
+                addStatement("PreviewData(")
+                indent()
+
+                preview.previewArg<String>("name")
+                  .takeIf { it.isNotEmpty() }
+                  ?.let { addStatement("name = %S,", it) }
+
+                preview.previewArg<Float>("fontScale")
+                  .takeIf { it != 1f }
+                  ?.let { addStatement("fontScale = %Lf,", it) }
+
+                unindent()
+                addStatement("),")
+              }
+
+              unindent()
+              addStatement("),")
             }
 
             unindent()
@@ -79,12 +104,16 @@ object PaparazziPoet {
     param.annotations.any { it.shortName.asString() == "PreviewParameter" }
   }
 
+  private fun KSFunctionDeclaration.previews() = annotations
+    .filter { it.qualifiedName() == "androidx.compose.ui.tooling.preview.Preview" }
+    .toList()
+
   private fun KSFunctionDeclaration.preview() = annotations
     .firstOrNull { it.qualifiedName() == "androidx.compose.ui.tooling.preview.Preview" }
 
-  private fun <T> KSAnnotation.previewArg(name: String, default: T): T = arguments
-    .firstOrNull { it.name?.asString() == name }
-    ?.let { it.value as T } ?: default
+  private fun <T> KSAnnotation.previewArg(name: String): T = arguments
+    .first { it.name?.asString() == name }
+    .let { it.value as T }
 
   private fun KSValueParameter.previewParamProviderClassName() = annotations
     .first { it.shortName.asString() == "PreviewParameter" }
