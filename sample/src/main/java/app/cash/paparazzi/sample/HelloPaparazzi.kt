@@ -1,5 +1,6 @@
 package app.cash.paparazzi.sample
 
+import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import androidx.compose.ui.tooling.preview.UiMode
 import app.cash.paparazzi.annotation.api.Paparazzi
 
 @Composable
@@ -53,7 +55,8 @@ fun HelloPaparazzi(
 }
 
 @Paparazzi
-@Preview(name = "basic preview")
+@Preview
+@Preview(name = "dark mode", uiMode = UI_MODE_NIGHT_YES)
 @Composable
 fun HelloPaparazziPreview() {
   HelloPaparazzi(

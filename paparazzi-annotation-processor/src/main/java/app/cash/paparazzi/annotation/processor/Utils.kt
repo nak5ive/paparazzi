@@ -14,18 +14,20 @@ val metadataFileDefinition = """
     val packageName: String,
     val functionName: String,
     val composable: (@Composable (Any?) -> Unit),
-    val previewParameter: PreviewParameterData? = null,
     val previews: List<PreviewData> = emptyList(),
+    val previewParameter: PreviewParameterData? = null,
+  )
+
+  data class PreviewData(
+    val name: String? = null,
+    val group: String? = null,
+    val fontScale: Float? = null,
+    val uiMode: Int? = null,
   )
 
   data class PreviewParameterData(
     val name: String,
     val provider: PreviewParameterProvider<out Any>,
-  )
-
-  data class PreviewData(
-    val name: String? = null,
-    val fontScale: Float? = null,
   )
 """.trimIndent()
 
@@ -34,27 +36,22 @@ val snapshotFileDefinition = """
 
   fun Paparazzi.snapshot(
     annotations: List<PaparazziAnnotationData>,
-    wrapper: (@Composable (@Composable () -> Unit) -> Unit)? = null,
+    wrapper: (@Composable (@Composable () -> Unit) -> Unit) = { it() },
   ) {
-    annotations.forEach { data ->
-      if (data.previews.size > 0) {
-        data.previews.forEach { preview ->
-          val name = "${'$'}{data.functionName}${'$'}{if (preview.name != null) "-${'$'}{preview.name}" else ""}"
-          if (data.previewParameter != null) {
-            data.previewParameter!!.provider.values.forEachIndexed { i, value ->
-              snapshot("${'$'}name[${'$'}{data.previewParameter!!.name}${'$'}i]") {
-                wrapper?.let { it { data.composable(value) } } ?: data.composable(value)
-              }
-            }
-          } else {
-            snapshot(name) {
-              wrapper?.let { it { data.composable(null) } } ?: data.composable(null)
-            }
+    annotations.flatMap { data ->
+      val previews = if (data.previews.isEmpty()) listOf<PreviewData?>(null) else data.previews
+      previews.map { data to it }
+    }.forEach { (data, preview) ->
+      // TODO use preview param args
+      if (data.previewParameter != null) {
+        data.previewParameter!!.provider.values.forEachIndexed { i, value ->
+          snapshot("${'$'}{data.functionName}[${'$'}{data.previewParameter!!.name}${'$'}i]") {
+            wrapper { data.composable(value) }
           }
         }
       } else {
         snapshot(data.functionName) {
-          wrapper?.let { it { data.composable(null) } } ?: data.composable(null)
+          wrapper { data.composable(null) }
         }
       }
     }

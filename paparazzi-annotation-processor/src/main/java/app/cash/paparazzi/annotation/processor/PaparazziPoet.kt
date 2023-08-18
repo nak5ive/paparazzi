@@ -51,9 +51,7 @@ object PaparazziPoet {
             addStatement("packageName = %S,", functionClassName.packageName)
             addStatement("functionName = %S,", functionClassName.simpleName)
 
-            val previews = func.previews()
             val previewParam = func.previewParam()
-
             if (previewParam != null) {
               addStatement("composable = { %T(it as %T) },", functionClassName, previewParam.previewParamTypeClassName())
               addStatement("previewParameter = PreviewParameterData(")
@@ -66,6 +64,7 @@ object PaparazziPoet {
               addStatement("composable = { %T() },", functionClassName)
             }
 
+            val previews = func.previews()
             if (previews.isNotEmpty()) {
               addStatement("previews = listOf(")
               indent()
@@ -78,9 +77,17 @@ object PaparazziPoet {
                   .takeIf { it.isNotEmpty() }
                   ?.let { addStatement("name = %S,", it) }
 
+                preview.previewArg<String>("group")
+                  .takeIf { it.isNotEmpty() }
+                  ?.let { addStatement("group = %S,", it) }
+
                 preview.previewArg<Float>("fontScale")
                   .takeIf { it != 1f }
                   ?.let { addStatement("fontScale = %Lf,", it) }
+
+                preview.previewArg<Int>("uiMode")
+                  .takeIf { it != 0 }
+                  ?.let { addStatement("uiMode = %L,", it) }
 
                 unindent()
                 addStatement("),")
