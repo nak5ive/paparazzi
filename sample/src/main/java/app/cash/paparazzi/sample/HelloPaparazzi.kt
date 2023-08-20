@@ -59,7 +59,6 @@ fun HelloPaparazzi(
 
 @Paparazzi
 @ScaledPreviews
-@Preview(name = "night watch", uiMode = UI_MODE_NIGHT_YES and UI_MODE_TYPE_WATCH)
 @Composable
 fun HelloPaparazziPreview() {
   HelloPaparazzi(
@@ -68,7 +67,7 @@ fun HelloPaparazziPreview() {
 }
 
 @Paparazzi
-@Preview
+@ScaledPreviews
 @Composable
 fun HelloPaparazziProvided(@PreviewParameter(TextProvider::class) text: String) {
   HelloPaparazzi(
@@ -83,6 +82,6 @@ class TextProvider : PreviewParameterProvider<String> {
   )
 }
 
-@Preview(name = "normal", device = PIXEL_3_XL)
-@Preview(name = "large", fontScale = 2f, device = PIXEL_3_XL)
+@Preview(fontScale = 1f, device = PIXEL_3_XL)
+@Preview(fontScale = 2f, device = PIXEL_3_XL)
 annotation class ScaledPreviews

@@ -25,25 +25,16 @@ object PaparazziPoet {
 
   private fun buildDataClassFile() =
     FileSpec.scriptBuilder(METADATA_FILE_NAME, PACKAGE_NAME)
-      .addImport("androidx.compose.runtime", "Composable")
-      .addImport("androidx.compose.ui.tooling.preview", "PreviewParameterProvider")
       .addCode(metadataFileDefinition)
       .build()
 
   private fun buildSnapshotFile() =
     FileSpec.scriptBuilder(SNAPSHOT_FILE_NAME, PACKAGE_NAME)
-      .addImport("androidx.compose.runtime", "Composable")
-      .addImport("app.cash.paparazzi", "DeviceConfig")
-      .addImport("app.cash.paparazzi", "Paparazzi")
       .addCode(snapshotFileDefinition)
       .build()
 
   private fun buildUtilsFile() =
     FileSpec.scriptBuilder(UTILS_FILE_NAME, PACKAGE_NAME)
-      .addImport("android.content.res", "Configuration")
-      .addImport("app.cash.paparazzi", "DeviceConfig")
-      .addImport("com.android.resources", "NightMode")
-      .addImport("com.android.resources", "UiMode")
       .addCode(utilsFileDefinition)
       .build()
 

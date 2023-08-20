@@ -11,6 +11,9 @@ const val TEST_ANNOTATIONS_FILE_NAME = "testAnnotations"
 const val TEST_ANNOTATIONS_VALUE_NAME = "paparazziTestAnnotations"
 
 val metadataFileDefinition = """
+  import androidx.compose.runtime.Composable
+  import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+
   data class PaparazziAnnotationData(
     val packageName: String,
     val functionName: String,
@@ -34,7 +37,10 @@ val metadataFileDefinition = """
 """.trimIndent()
 
 val snapshotFileDefinition = """
-  val paparazziAnnotations = $PREVIEW_ANNOTATIONS_VALUE_NAME + $TEST_ANNOTATIONS_VALUE_NAME
+  import androidx.compose.runtime.Composable
+  import app.cash.paparazzi.DeviceConfig
+  import app.cash.paparazzi.Paparazzi
+  import kotlin.math.absoluteValue
 
   fun Paparazzi.snapshot(
     annotations: List<PaparazziAnnotationData>,
@@ -43,52 +49,68 @@ val snapshotFileDefinition = """
     annotations.flatMap { data ->
       val previews = if (data.previews.isEmpty()) listOf<PreviewData?>(null) else data.previews
       previews.map { data to it }
-    }.forEach { (data, preview) ->
-      var deviceConfig = preview?.device.let { deviceConfigForId(it ?: "") }
-      preview?.fontScale?.let {
-        deviceConfig = deviceConfig.copy(fontScale = it)
-      }
-      preview?.uiMode?.let {
-        deviceConfig = deviceConfig.copy(
-          uiMode = uiModeForPreview(it),
-          nightMode = nightModeForPreview(it),
-        )
-      }
-      preview?.locale?.let {
-        deviceConfig = deviceConfig.copy(locale = it)
-      }
+    }.forEach { pair ->
+      val (data, preview) = pair
+      unsafeUpdateConfig(preview.deviceConfig())
 
-      unsafeUpdateConfig(deviceConfig)
-
-      val name = buildList {
-        (
-          data.functionName +
-          if (data.previews.size > 1) {
-            data.previews.indexOf(preview)
-          } else ""
-        ).let(::add)
-
-        preview?.name?.let { add(it) }
-        preview?.fontScale?.let { add("scale${'$'}it") }
-      }.joinToString("_")
-
-      if (data.previewParameter != null) {
-        data.previewParameter!!.provider.values.forEachIndexed { i, value ->
-          snapshot("${'$'}name[${'$'}{data.previewParameter!!.name}${'$'}i]") {
+      data.previewParameter?.let { pp ->
+        pp.provider.values.forEachIndexed { i, value ->
+          val paramName = "${'$'}{data.previewParameter!!.name}${'$'}i"
+          snapshot(pair.snapshotName(paramName)) {
             wrapper { data.composable(value) }
           }
         }
-      } else {
-        snapshot(name) {
-          wrapper { data.composable(null) }
-        }
-      }
+      } ?: snapshot(pair.snapshotName()) { wrapper { data.composable(null) } }
     }
+  }
+
+  private fun PreviewData?.deviceConfig() = this?.device.let { deviceConfigForId(it) }
+    .let { config ->
+      this?.fontScale?.let { config.copy(fontScale = it) } ?: config
+    }
+    .let { config ->
+      this?.uiMode?.let {
+        config.copy(
+          uiMode = uiModeForPreview(it),
+          nightMode = nightModeForPreview(it),
+        )
+      } ?: config
+    }
+    .let { config ->
+      this?.locale?.let { config.copy(locale = it) } ?: config
+    }
+
+  private fun Pair<PaparazziAnnotationData, PreviewData?>.snapshotName(paramName: String? = null): String {
+    val (data, preview) = this
+
+    return buildList<String> {
+      add(data.functionName)
+      preview?.name?.let(::add)
+
+      buildList<String> {
+        preview?.fontScale?.let { add("scale${'$'}it") }
+        paramName?.let(::add)
+      }.takeIf { it.isNotEmpty() }
+        ?.joinToString(",", "[", "]")
+        ?.let(::add)
+
+      val dataHash = data.copy(previews = emptyList()).hashCode()
+      val previewHash = preview.hashCode()
+      val paramHash = paramName.hashCode()
+      (dataHash xor previewHash xor paramHash).toString(16).padStart(8, '0').let(::add)
+    }.joinToString("_")
   }
 """.trimIndent()
 
 val utilsFileDefinition = """
-  fun deviceConfigForId(id: String) = when (id) {
+  import android.content.res.Configuration
+  import app.cash.paparazzi.DeviceConfig
+  import com.android.resources.NightMode
+  import com.android.resources.UiMode
+
+  val paparazziAnnotations = paparazziPreviewAnnotations + paparazziTestAnnotations
+
+  internal fun deviceConfigForId(id: String?) = when (id) {
     "id:Nexus 7" -> DeviceConfig.NEXUS_7
     "id:Nexus 7 2013" -> DeviceConfig.NEXUS_7_2012
     "id:Nexus 5" -> DeviceConfig.NEXUS_5
@@ -110,11 +132,10 @@ val utilsFileDefinition = """
     "id:pixel_4_xl" -> DeviceConfig.PIXEL_4_XL
     "id:wearos_small_round" -> DeviceConfig.WEAR_OS_SMALL_ROUND
     "id:wearos_square" -> DeviceConfig.WEAR_OS_SQUARE
-
     else -> DeviceConfig.NEXUS_5
   }
 
-  fun uiModeForPreview(mode: Int) = when(mode and Configuration.UI_MODE_TYPE_MASK) {
+  internal fun uiModeForPreview(mode: Int) = when(mode and Configuration.UI_MODE_TYPE_MASK) {
     Configuration.UI_MODE_TYPE_CAR -> UiMode.CAR
     Configuration.UI_MODE_TYPE_DESK -> UiMode.DESK
     Configuration.UI_MODE_TYPE_APPLIANCE -> UiMode.APPLIANCE
@@ -123,7 +144,7 @@ val utilsFileDefinition = """
     else -> UiMode.NORMAL
   }
 
-  fun nightModeForPreview(mode: Int) = when(mode and Configuration.UI_MODE_NIGHT_MASK) {
+  internal fun nightModeForPreview(mode: Int) = when(mode and Configuration.UI_MODE_NIGHT_MASK) {
     Configuration.UI_MODE_NIGHT_YES -> NightMode.NIGHT
     else -> NightMode.NOTNIGHT
   }
