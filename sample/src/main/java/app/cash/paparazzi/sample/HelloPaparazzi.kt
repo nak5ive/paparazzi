@@ -1,6 +1,7 @@
 package app.cash.paparazzi.sample
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.content.res.Configuration.UI_MODE_TYPE_WATCH
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,6 +14,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.tooling.preview.Device
+import androidx.compose.ui.tooling.preview.Devices.PIXEL_3_XL
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
@@ -55,8 +58,8 @@ fun HelloPaparazzi(
 }
 
 @Paparazzi
-@Preview
-@Preview(name = "dark mode", uiMode = UI_MODE_NIGHT_YES)
+@ScaledPreviews
+@Preview(name = "night watch", uiMode = UI_MODE_NIGHT_YES and UI_MODE_TYPE_WATCH)
 @Composable
 fun HelloPaparazziPreview() {
   HelloPaparazzi(
@@ -65,10 +68,9 @@ fun HelloPaparazziPreview() {
 }
 
 @Paparazzi
-@Preview(name = "normal", fontScale = 1f)
-@Preview(name = "large", fontScale = 2f)
+@Preview
 @Composable
-internal fun HelloPaparazziPreview(@PreviewParameter(TextProvider::class) text: String) {
+fun HelloPaparazziProvided(@PreviewParameter(TextProvider::class) text: String) {
   HelloPaparazzi(
     text = text,
   )
@@ -80,3 +82,7 @@ class TextProvider : PreviewParameterProvider<String> {
     "Nice to meet you, Paparazzi",
   )
 }
+
+@Preview(name = "normal", device = PIXEL_3_XL)
+@Preview(name = "large", fontScale = 2f, device = PIXEL_3_XL)
+annotation class ScaledPreviews

@@ -20,6 +20,7 @@ object PaparazziPoet {
     listOf(
       buildAnnotationsFile(functions, TEST_ANNOTATIONS_FILE_NAME, TEST_ANNOTATIONS_VALUE_NAME),
       buildSnapshotFile(),
+      buildUtilsFile(),
     )
 
   private fun buildDataClassFile() =
@@ -32,8 +33,18 @@ object PaparazziPoet {
   private fun buildSnapshotFile() =
     FileSpec.scriptBuilder(SNAPSHOT_FILE_NAME, PACKAGE_NAME)
       .addImport("androidx.compose.runtime", "Composable")
+      .addImport("app.cash.paparazzi", "DeviceConfig")
       .addImport("app.cash.paparazzi", "Paparazzi")
       .addCode(snapshotFileDefinition)
+      .build()
+
+  private fun buildUtilsFile() =
+    FileSpec.scriptBuilder(UTILS_FILE_NAME, PACKAGE_NAME)
+      .addImport("android.content.res", "Configuration")
+      .addImport("app.cash.paparazzi", "DeviceConfig")
+      .addImport("com.android.resources", "NightMode")
+      .addImport("com.android.resources", "UiMode")
+      .addCode(utilsFileDefinition)
       .build()
 
   private fun buildAnnotationsFile(functions: Sequence<KSFunctionDeclaration>, fileName: String, valueName: String) =
@@ -77,17 +88,21 @@ object PaparazziPoet {
                   .takeIf { it.isNotEmpty() }
                   ?.let { addStatement("name = %S,", it) }
 
-                preview.previewArg<String>("group")
-                  .takeIf { it.isNotEmpty() }
-                  ?.let { addStatement("group = %S,", it) }
-
                 preview.previewArg<Float>("fontScale")
                   .takeIf { it != 1f }
                   ?.let { addStatement("fontScale = %Lf,", it) }
 
+                preview.previewArg<String>("device")
+                  .takeIf { it.isNotEmpty() }
+                  ?.let { addStatement("device = %S,", it) }
+
                 preview.previewArg<Int>("uiMode")
                   .takeIf { it != 0 }
                   ?.let { addStatement("uiMode = %L,", it) }
+
+                preview.previewArg<String>("locale")
+                  .takeIf { it.isNotEmpty() }
+                  ?.let { addStatement("locale = %S,", it) }
 
                 unindent()
                 addStatement("),")
@@ -108,22 +123,44 @@ object PaparazziPoet {
       .build()
 
   private fun KSFunctionDeclaration.previewParam() = parameters.firstOrNull { param ->
-    param.annotations.any { it.shortName.asString() == "PreviewParameter" }
+    param.annotations.any { it.isPreviewParameter() }
   }
 
-  private fun KSFunctionDeclaration.previews() = annotations
-    .filter { it.qualifiedName() == "androidx.compose.ui.tooling.preview.Preview" }
-    .toList()
+  private fun KSFunctionDeclaration.previews() = annotations.findPreviews().toList()
 
-  private fun KSFunctionDeclaration.preview() = annotations
-    .firstOrNull { it.qualifiedName() == "androidx.compose.ui.tooling.preview.Preview" }
+  /**
+   * when the same annotations are applied higher in the tree, an endless recursive lookup can occur.
+   * using a stack to keep to a record of each symbol lets us break when we hit one we've already encountered
+   *
+   * ie:
+   * @Bottom
+   * annotation class Top
+   *
+   * @Top
+   * annotation class Bottom
+   *
+   * @Bottom
+   * fun SomeFun()
+   */
+  private fun Sequence<KSAnnotation>.findPreviews(stack: Set<KSAnnotation> = setOf()): Sequence<KSAnnotation> {
+    val direct = filter { it.isPreview() }
+    val indirect = filterNot { it.isPreview() || stack.contains(it) }
+      .map { it.parentAnnotations().findPreviews(stack.plus(it)) }
+      .flatten()
+    return direct.plus(indirect)
+  }
+
+  private fun KSAnnotation.isPreview() = qualifiedName() == "androidx.compose.ui.tooling.preview.Preview"
+  private fun KSAnnotation.isPreviewParameter() = qualifiedName() == "androidx.compose.ui.tooling.preview.PreviewParameter"
+
+  private fun KSAnnotation.parentAnnotations() = declaration().annotations
 
   private fun <T> KSAnnotation.previewArg(name: String): T = arguments
     .first { it.name?.asString() == name }
     .let { it.value as T }
 
   private fun KSValueParameter.previewParamProviderClassName() = annotations
-    .first { it.shortName.asString() == "PreviewParameter" }
+    .first { it.isPreviewParameter() }
     .arguments
     .first { arg -> arg.name?.asString() == "provider" }
     .let { it.value as KSType }

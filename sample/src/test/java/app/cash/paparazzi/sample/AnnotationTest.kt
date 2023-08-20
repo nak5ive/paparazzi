@@ -18,19 +18,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(TestParameterInjector::class)
-class AnnotationTest(
-  @TestParameter fontScale: FontScale,
-) {
+class AnnotationTest {
 
-  enum class FontScale(val scale: Float) {
-    NORMAL(1.0f), LARGE(2.0f)
-  }
-
-  val deviceConfig = DeviceConfig.PIXEL_3.copy(fontScale = fontScale.scale)
-
-  @get:Rule val paparazzi = Paparazzi(
-    deviceConfig = deviceConfig
-  )
+  @get:Rule val paparazzi = Paparazzi()
 
   @Test
   fun `preview annotations`() {
