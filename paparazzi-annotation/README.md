@@ -1,6 +1,19 @@
 # `@Paparazzi`
 An annotation used to generate Paparazzi snapshots for composable preview functions.
 
+## Installation
+Add the following to your `build.gradle` file
+
+```groovy
+// required ksp plugin
+apply plugin: 'com.google.devtools.ksp'
+
+dependencies {
+  implementation "app.cash.paparazzi:paparazzi-annotation:1.3.1"
+  ksp "app.cash.paparazzi:paparazzi-annotation-processor:1.3.1"
+}
+```
+
 ## Basic Usage
 Apply the annotation alongside an existing preview method. The annotation processor will generate a manifest of information about this method and the previews applied.
 
