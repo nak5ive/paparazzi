@@ -79,4 +79,4 @@ annotation class ScaledThemedPreviews
 ```
 
 ## Sample
-See [the sample](../sample/src/main/java/app/cash/paparazzi/sample) for working implementations
+See [the sample](../sample/src/test/java/app/cash/paparazzi/sample) for working implementations
