@@ -38,12 +38,15 @@ val metadataFileDefinition = """
 
 val snapshotFileDefinition = """
   import androidx.compose.runtime.Composable
+  import androidx.compose.runtime.CompositionLocalProvider
+  import androidx.compose.ui.platform.LocalInspectionMode
   import app.cash.paparazzi.DeviceConfig
   import app.cash.paparazzi.Paparazzi
   import kotlin.math.absoluteValue
 
   fun Paparazzi.snapshot(
     annotations: List<PaparazziAnnotationData>,
+    localInspectionMode: Boolean = true,
     wrapper: (@Composable (@Composable () -> Unit) -> Unit) = { it() },
   ) {
     annotations.flatMap { data ->
@@ -57,10 +60,16 @@ val snapshotFileDefinition = """
         pp.provider.values.forEachIndexed { i, value ->
           val paramName = "${'$'}{data.previewParameter!!.name}${'$'}i"
           snapshot(pair.snapshotName(paramName)) {
-            wrapper { data.composable(value) }
+            CompositionLocalProvider(LocalInspectionMode provides localInspectionMode) {
+              wrapper { data.composable(value) }
+            }
           }
         }
-      } ?: snapshot(pair.snapshotName()) { wrapper { data.composable(null) } }
+      } ?: snapshot(pair.snapshotName()) {
+        CompositionLocalProvider(LocalInspectionMode provides localInspectionMode) {
+          wrapper { data.composable(null) }
+        }
+      }
     }
   }
 
@@ -94,10 +103,8 @@ val snapshotFileDefinition = """
         ?.joinToString(",", "[", "]")
         ?.let(::add)
 
-      val dataHash = data.copy(previews = emptyList()).hashCode()
-      val previewHash = preview.hashCode()
-      val paramHash = paramName.hashCode()
-      (dataHash xor previewHash xor paramHash).toString(16).padStart(8, '0').let(::add)
+      "${'$'}{data.packageName}.${'$'}{data.functionName}"
+        .hashCode().absoluteValue.toString(16).padStart(8, '0').let(::add)
     }.joinToString("_")
   }
 """.trimIndent()
