@@ -2,6 +2,7 @@ package app.cash.paparazzi.annotation.processor
 
 const val PACKAGE_NAME = "app.cash.paparazzi.annotation"
 const val ANNOTATION_QUALIFIED_NAME = "app.cash.paparazzi.annotation.api.Paparazzi"
+const val ENVIRONMENT_FILE_NAME = "environment"
 const val METADATA_FILE_NAME = "metadata"
 const val SNAPSHOT_FILE_NAME = "snapshot"
 const val UTILS_FILE_NAME = "utils"

@@ -30,7 +30,7 @@ class PaparazziProcessor(
     invoked = true
 
     val dependencies = Dependencies(true, *resolver.getAllFiles().toList().toTypedArray())
-    val projectInfo = environment.collectProjectInfo(dependencies, PACKAGE_NAME)
+    val projectInfo = environment.collectProjectInfo(dependencies, PACKAGE_NAME, ENVIRONMENT_FILE_NAME)
 
     environment.logger.info("PAPARAZZI - running in ${projectInfo.variantName}")
 
@@ -64,18 +64,18 @@ fun KSAnnotation.isPaparazzi() = qualifiedName() == ANNOTATION_QUALIFIED_NAME
 fun KSAnnotation.qualifiedName() = declaration().qualifiedName?.asString() ?: ""
 fun KSAnnotation.declaration() = annotationType.resolve().declaration
 
-private fun SymbolProcessorEnvironment.collectProjectInfo(dependencies: Dependencies, fileName: String): ProjectInfo {
-  codeGenerator.createNewFileByPath(dependencies, fileName, "txt")
+private fun SymbolProcessorEnvironment.collectProjectInfo(dependencies: Dependencies, packageName:String, fileName: String): ProjectInfo {
+  codeGenerator.createNewFile(dependencies, packageName, fileName, "kt")
   return codeGenerator.generatedFile.first().run {
     val path = absolutePath
 
-    val variantRegex = Regex("ksp/(.+)/resources")
+    val variantRegex = Regex("ksp/(.+)/kotlin")
     val (variantName) = variantRegex.find(path)!!.destructured
 
     ProjectInfo(
       variantName = variantName,
       isTest = variantName.endsWith("UnitTest"),
-    ).also { writeText("$it") }
+    ).also { writeText("// $it") }
   }
 }
 
