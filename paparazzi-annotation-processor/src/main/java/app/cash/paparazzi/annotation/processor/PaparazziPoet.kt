@@ -13,14 +13,14 @@ object PaparazziPoet {
   fun buildPreviewFiles(functions: Sequence<KSFunctionDeclaration>) =
     listOf(
       buildDataClassFile(),
-      buildAnnotationsFile(functions, PREVIEW_ANNOTATIONS_FILE_NAME, PREVIEW_ANNOTATIONS_VALUE_NAME),
+      buildAnnotationsFile(functions, PREVIEW_ANNOTATIONS_FILE_NAME, PREVIEW_ANNOTATIONS_VALUE_NAME)
     )
 
   fun buildTestFiles(functions: Sequence<KSFunctionDeclaration>) =
     listOf(
       buildAnnotationsFile(functions, TEST_ANNOTATIONS_FILE_NAME, TEST_ANNOTATIONS_VALUE_NAME),
       buildSnapshotFile(),
-      buildUtilsFile(),
+      buildUtilsFile()
     )
 
   private fun buildDataClassFile() =
@@ -156,8 +156,8 @@ object PaparazziPoet {
     .first { arg -> arg.name?.asString() == "provider" }
     .let { it.value as KSType }
     .declaration.qualifiedName?.let {
-    ClassName(it.getQualifier(), it.getShortName())
-  }
+      ClassName(it.getQualifier(), it.getShortName())
+    }
 
   private fun KSValueParameter.previewParamTypeClassName() = type.resolve().declaration.qualifiedName?.let {
     ClassName(it.getQualifier(), it.getShortName())

@@ -10,8 +10,8 @@ import com.google.devtools.ksp.symbol.FunctionKind.TOP_LEVEL
 import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
-import com.google.devtools.ksp.symbol.Visibility.PUBLIC
 import com.google.devtools.ksp.symbol.Visibility.INTERNAL
+import com.google.devtools.ksp.symbol.Visibility.PUBLIC
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ksp.writeTo
 
@@ -20,7 +20,7 @@ class PaparazziProcessorProvider : SymbolProcessorProvider {
 }
 
 class PaparazziProcessor(
-  private val environment: SymbolProcessorEnvironment,
+  private val environment: SymbolProcessorEnvironment
 ) : SymbolProcessor {
 
   private var invoked = false
@@ -64,7 +64,7 @@ fun KSAnnotation.isPaparazzi() = qualifiedName() == ANNOTATION_QUALIFIED_NAME
 fun KSAnnotation.qualifiedName() = declaration().qualifiedName?.asString() ?: ""
 fun KSAnnotation.declaration() = annotationType.resolve().declaration
 
-private fun SymbolProcessorEnvironment.collectProjectInfo(dependencies: Dependencies, packageName:String, fileName: String): ProjectInfo {
+private fun SymbolProcessorEnvironment.collectProjectInfo(dependencies: Dependencies, packageName: String, fileName: String): ProjectInfo {
   codeGenerator.createNewFile(dependencies, packageName, fileName, "kt")
   return codeGenerator.generatedFile.first().run {
     val path = absolutePath
@@ -74,12 +74,12 @@ private fun SymbolProcessorEnvironment.collectProjectInfo(dependencies: Dependen
 
     ProjectInfo(
       variantName = variantName,
-      isTest = variantName.endsWith("UnitTest"),
+      isTest = variantName.endsWith("UnitTest")
     ).also { writeText("// $it") }
   }
 }
 
 data class ProjectInfo(
   val variantName: String,
-  val isTest: Boolean,
+  val isTest: Boolean
 )
