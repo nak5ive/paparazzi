@@ -6,7 +6,9 @@ import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.squareup.kotlinpoet.ClassName
 
-fun KSAnnotation.isPaparazzi() = qualifiedName() == ANNOTATION_QUALIFIED_NAME
+const val PACKAGE_NAME = "app.cash.paparazzi.annotation"
+
+fun KSAnnotation.isPaparazzi() = qualifiedName() == "app.cash.paparazzi.annotation.api.Paparazzi"
 fun KSAnnotation.isPreview() = qualifiedName() == "androidx.compose.ui.tooling.preview.Preview"
 fun KSAnnotation.isPreviewParameter() = qualifiedName() == "androidx.compose.ui.tooling.preview.PreviewParameter"
 
