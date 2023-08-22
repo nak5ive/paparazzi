@@ -3,8 +3,6 @@ import app.cash.paparazzi.DeviceConfig
 import com.android.resources.NightMode
 import com.android.resources.UiMode
 
-val paparazziAnnotations = paparazziPreviewAnnotations + paparazziTestAnnotations
-
 internal fun deviceConfigForId(id: String?) = when (id) {
   "id:Nexus 7" -> DeviceConfig.NEXUS_7
   "id:Nexus 7 2013" -> DeviceConfig.NEXUS_7_2012

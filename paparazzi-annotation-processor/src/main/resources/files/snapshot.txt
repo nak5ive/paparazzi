@@ -5,6 +5,8 @@ import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.Paparazzi
 import kotlin.math.absoluteValue
 
+val paparazziAnnotations = paparazziPreviewAnnotations + paparazziTestAnnotations
+
 fun Paparazzi.snapshot(
   annotations: List<PaparazziAnnotationData>,
   localInspectionMode: Boolean = true,
