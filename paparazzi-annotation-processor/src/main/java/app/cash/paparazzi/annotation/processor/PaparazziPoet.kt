@@ -13,29 +13,29 @@ object PaparazziPoet {
   fun buildPreviewFiles(functions: Sequence<KSFunctionDeclaration>) =
     listOf(
       buildDataClassFile(),
-      buildAnnotationsFile(functions, PREVIEW_ANNOTATIONS_FILE_NAME, PREVIEW_ANNOTATIONS_VALUE_NAME)
+      buildAnnotationsFile(functions, "previewAnnotations", "paparazziPreviewAnnotations")
     )
 
   fun buildTestFiles(functions: Sequence<KSFunctionDeclaration>) =
     listOf(
-      buildAnnotationsFile(functions, TEST_ANNOTATIONS_FILE_NAME, TEST_ANNOTATIONS_VALUE_NAME),
+      buildAnnotationsFile(functions, "testAnnotations", "paparazziTestAnnotations"),
       buildSnapshotFile(),
       buildUtilsFile()
     )
 
   private fun buildDataClassFile() =
-    FileSpec.scriptBuilder(METADATA_FILE_NAME, PACKAGE_NAME)
-      .addCode(metadataFileDefinition)
+    FileSpec.scriptBuilder("metadata", PACKAGE_NAME)
+      .addCode(readResourceFile("files/metadata.txt"))
       .build()
 
   private fun buildSnapshotFile() =
-    FileSpec.scriptBuilder(SNAPSHOT_FILE_NAME, PACKAGE_NAME)
-      .addCode(snapshotFileDefinition)
+    FileSpec.scriptBuilder("snapshot", PACKAGE_NAME)
+      .addCode(readResourceFile("files/snapshot.txt"))
       .build()
 
   private fun buildUtilsFile() =
-    FileSpec.scriptBuilder(UTILS_FILE_NAME, PACKAGE_NAME)
-      .addCode(utilsFileDefinition)
+    FileSpec.scriptBuilder("utils", PACKAGE_NAME)
+      .addCode(readResourceFile("files/utils.txt"))
       .build()
 
   private fun buildAnnotationsFile(functions: Sequence<KSFunctionDeclaration>, fileName: String, valueName: String) =
@@ -112,6 +112,8 @@ object PaparazziPoet {
         }
       )
       .build()
+
+  private fun readResourceFile(fileName: String) = javaClass.classLoader?.getResource(fileName)?.readText() ?: ""
 
   private fun KSFunctionDeclaration.previewParam() = parameters.firstOrNull { param ->
     param.annotations.any { it.isPreviewParameter() }

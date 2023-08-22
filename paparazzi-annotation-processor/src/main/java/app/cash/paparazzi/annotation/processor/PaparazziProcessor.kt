@@ -15,6 +15,9 @@ import com.google.devtools.ksp.symbol.Visibility.PUBLIC
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ksp.writeTo
 
+const val PACKAGE_NAME = "app.cash.paparazzi.annotation"
+const val ANNOTATION_QUALIFIED_NAME = "app.cash.paparazzi.annotation.api.Paparazzi"
+
 class PaparazziProcessorProvider : SymbolProcessorProvider {
   override fun create(environment: SymbolProcessorEnvironment) = PaparazziProcessor(environment)
 }
@@ -30,7 +33,7 @@ class PaparazziProcessor(
     invoked = true
 
     val dependencies = Dependencies(true, *resolver.getAllFiles().toList().toTypedArray())
-    val projectInfo = environment.collectProjectInfo(dependencies, PACKAGE_NAME, ENVIRONMENT_FILE_NAME)
+    val projectInfo = environment.collectProjectInfo(dependencies, PACKAGE_NAME, "environment")
 
     environment.logger.info("PAPARAZZI - running in ${projectInfo.variantName}")
 

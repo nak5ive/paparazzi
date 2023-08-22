@@ -1,0 +1,71 @@
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalInspectionMode
+import app.cash.paparazzi.DeviceConfig
+import app.cash.paparazzi.Paparazzi
+import kotlin.math.absoluteValue
+
+fun Paparazzi.snapshot(
+  annotations: List<PaparazziAnnotationData>,
+  localInspectionMode: Boolean = true,
+  wrapper: (@Composable (@Composable () -> Unit) -> Unit) = { it() },
+) {
+  annotations.flatMap { data ->
+    val previews = if (data.previews.isEmpty()) listOf<PreviewData?>(null) else data.previews
+    previews.map { data to it }
+  }.forEach { pair ->
+    val (data, preview) = pair
+    unsafeUpdateConfig(preview.deviceConfig())
+
+    data.previewParameter?.let { pp ->
+      pp.provider.values.forEachIndexed { i, value ->
+        val paramName = "${data.previewParameter!!.name}$i"
+        snapshot(pair.snapshotName(paramName)) {
+          CompositionLocalProvider(LocalInspectionMode provides localInspectionMode) {
+            wrapper { data.composable(value) }
+          }
+        }
+      }
+    } ?: snapshot(pair.snapshotName()) {
+      CompositionLocalProvider(LocalInspectionMode provides localInspectionMode) {
+        wrapper { data.composable(null) }
+      }
+    }
+  }
+}
+
+private fun PreviewData?.deviceConfig() = this?.device.let { deviceConfigForId(it) }
+  .let { config ->
+    this?.fontScale?.let { config.copy(fontScale = it) } ?: config
+  }
+  .let { config ->
+    this?.uiMode?.let {
+      config.copy(
+        uiMode = uiModeForPreview(it),
+        nightMode = nightModeForPreview(it),
+      )
+    } ?: config
+  }
+  .let { config ->
+    this?.locale?.let { config.copy(locale = it) } ?: config
+  }
+
+private fun Pair<PaparazziAnnotationData, PreviewData?>.snapshotName(paramName: String? = null):
+    String {
+  val (data, preview) = this
+
+  return buildList<String> {
+    add(data.functionName)
+    preview?.name?.let(::add)
+
+    buildList<String> {
+      preview?.fontScale?.let { add("scale$it") }
+      paramName?.let(::add)
+    }.takeIf { it.isNotEmpty() }
+      ?.joinToString(",", "[", "]")
+      ?.let(::add)
+
+    "${data.packageName}.${data.functionName}"
+      .hashCode().absoluteValue.toString(16).padStart(8, '0').let(::add)
+  }.joinToString("_")
+}
