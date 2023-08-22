@@ -1,7 +1,5 @@
 package app.cash.paparazzi.sample
 
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
-import android.content.res.Configuration.UI_MODE_TYPE_WATCH
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,17 +12,15 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.tooling.preview.Device
 import androidx.compose.ui.tooling.preview.Devices.PIXEL_3_XL
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
-import androidx.compose.ui.tooling.preview.UiMode
 import app.cash.paparazzi.annotation.api.Paparazzi
 
 @Composable
 fun HelloPaparazzi(
-  text: String = "Hello, Paparazzi",
+  text: String = "Hello, Paparazzi"
 ) {
   Column(
     Modifier
@@ -62,7 +58,7 @@ fun HelloPaparazzi(
 @Composable
 fun HelloPaparazziPreview() {
   HelloPaparazzi(
-    text = "Hello, Paparazzi Preview",
+    text = "Hello, Paparazzi Preview"
   )
 }
 
@@ -71,14 +67,14 @@ fun HelloPaparazziPreview() {
 @Composable
 fun HelloPaparazziProvided(@PreviewParameter(TextProvider::class) text: String) {
   HelloPaparazzi(
-    text = text,
+    text = text
   )
 }
 
 class TextProvider : PreviewParameterProvider<String> {
   override val values = sequenceOf(
     "Hello, Provided Preview Text",
-    "Nice to meet you, Paparazzi",
+    "Nice to meet you, Paparazzi"
   )
 }
 

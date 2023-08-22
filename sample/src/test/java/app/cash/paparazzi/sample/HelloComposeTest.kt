@@ -13,4 +13,3 @@ class HelloComposeTest {
     paparazzi.snapshot { HelloPaparazzi() }
   }
 }
-
