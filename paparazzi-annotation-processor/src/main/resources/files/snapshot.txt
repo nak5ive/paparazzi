@@ -2,8 +2,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalInspectionMode
 import app.cash.paparazzi.DeviceConfig
+import app.cash.paparazzi.DeviceConfig.Companion
 import app.cash.paparazzi.Paparazzi
-import kotlin.math.absoluteValue
+import com.android.resources.NightMode
+import com.android.resources.UiMode
 
 val paparazziAnnotations = paparazziPreviewAnnotations + paparazziTestAnnotations
 
@@ -17,7 +19,8 @@ fun Paparazzi.snapshot(
     previews.map { data to it }
   }.forEach { pair ->
     val (data, preview) = pair
-    unsafeUpdateConfig(preview.deviceConfig())
+
+    preview?.deviceConfig()?.let(::unsafeUpdateConfig)
 
     data.previewParameter?.let { pp ->
       pp.provider.values.forEachIndexed { i, value ->
@@ -36,38 +39,44 @@ fun Paparazzi.snapshot(
   }
 }
 
-private fun PreviewData?.deviceConfig() = this?.device.let { deviceConfigForId(it) }
-  .let { config ->
-    this?.fontScale?.let { config.copy(fontScale = it) } ?: config
-  }
-  .let { config ->
-    this?.uiMode?.let {
-      config.copy(
-        uiMode = uiModeForPreview(it),
-        nightMode = nightModeForPreview(it),
-      )
-    } ?: config
-  }
-  .let { config ->
-    this?.locale?.let { config.copy(locale = it) } ?: config
-  }
+private fun PreviewData.deviceConfig() = if (hasArgs()) {
+  (device?.deviceConfig() ?: DeviceConfig.NEXUS_5)
+    .let { config ->
+      fontScale?.let { config.copy(fontScale = it) } ?: config
+    }
+    .let { config ->
+      uiMode?.uiMode()?.let { config.copy(uiMode = it) } ?: config
+    }
+    .let { config ->
+      uiMode?.nightMode()?.let { config.copy(nightMode = it) } ?: config
+    }
+    .let { config ->
+      locale?.let { config.copy(locale = it) } ?: config
+    }
+} else null
+
+private fun PreviewData.hasArgs() =
+  device != null || fontScale != null || uiMode != null || locale != null
 
 private fun Pair<PaparazziAnnotationData, PreviewData?>.snapshotName(paramName: String? = null):
     String {
   val (data, preview) = this
 
-  return buildList<String> {
-    add(data.functionName)
+  val name = buildList<String> {
+    add("${data.packageName}.${data.functionName}")
     preview?.name?.let(::add)
-
-    buildList<String> {
-      preview?.fontScale?.let { add("scale$it") }
-      paramName?.let(::add)
-    }.takeIf { it.isNotEmpty() }
-      ?.joinToString(",", "[", "]")
-      ?.let(::add)
-
-    "${data.packageName}.${data.functionName}"
-      .hashCode().absoluteValue.toString(16).padStart(8, '0').let(::add)
   }.joinToString("_")
+
+  val args = buildList<String> {
+    preview?.fontScale?.let { "scale$it" }?.let(::add)
+    preview?.uiMode?.uiMode()?.shortDisplayValue?.let(::add)
+    preview?.uiMode?.nightMode()?.shortDisplayValue?.let(::add)
+    preview?.locale?.let(::add)
+    preview?.device?.let { add(it.substringAfterLast(":")) }
+    paramName?.let(::add)
+  }.takeIf { it.isNotEmpty() }
+    ?.joinToString(",", "[", "]")
+    ?: ""
+
+  return name + args
 }

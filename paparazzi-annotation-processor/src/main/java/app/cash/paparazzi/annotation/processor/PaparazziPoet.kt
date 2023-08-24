@@ -7,18 +7,19 @@ import com.squareup.kotlinpoet.buildCodeBlock
 
 object PaparazziPoet {
 
-  fun buildPreviewFiles(functions: Sequence<KSFunctionDeclaration>) =
-    listOf(
-      buildFileFromResource("data"),
-      buildAnnotationsFile(functions, "paparazziPreviewAnnotations")
-    )
-
-  fun buildTestFiles(functions: Sequence<KSFunctionDeclaration>) =
-    listOf(
-      buildFileFromResource("snapshot"),
-      buildFileFromResource("utils"),
-      buildAnnotationsFile(functions, "paparazziTestAnnotations")
-    )
+  fun buildFiles(functions: Sequence<KSFunctionDeclaration>, isTest: Boolean) =
+    if (isTest) {
+      listOf(
+        buildFileFromResource("snapshot"),
+        buildFileFromResource("utils"),
+        buildAnnotationsFile(functions, "paparazziTestAnnotations")
+      )
+    } else {
+      listOf(
+        buildFileFromResource("data"),
+        buildAnnotationsFile(functions, "paparazziPreviewAnnotations")
+      )
+    }
 
   private fun buildFileFromResource(fileName: String) =
     FileSpec.scriptBuilder(fileName, PACKAGE_NAME)

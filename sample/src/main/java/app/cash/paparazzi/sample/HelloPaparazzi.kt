@@ -1,5 +1,6 @@
 package app.cash.paparazzi.sample
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,7 +55,7 @@ fun HelloPaparazzi(
 }
 
 @Paparazzi
-@ScaledPreviews
+@ScaledThemedPreviews
 @Composable
 fun HelloPaparazziPreview() {
   HelloPaparazzi(
@@ -63,7 +64,7 @@ fun HelloPaparazziPreview() {
 }
 
 @Paparazzi
-@ScaledPreviews
+@ScaledThemedPreviews
 @Composable
 fun HelloPaparazziProvided(@PreviewParameter(TextProvider::class) text: String) {
   HelloPaparazzi(
@@ -78,6 +79,8 @@ class TextProvider : PreviewParameterProvider<String> {
   )
 }
 
-@Preview(fontScale = 1f, device = PIXEL_3_XL)
-@Preview(fontScale = 2f, device = PIXEL_3_XL)
-annotation class ScaledPreviews
+@Preview(fontScale = 1f, uiMode = Configuration.UI_MODE_NIGHT_NO)
+@Preview(fontScale = 1f, uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview(fontScale = 2f, uiMode = Configuration.UI_MODE_NIGHT_NO)
+@Preview(fontScale = 2f, uiMode = Configuration.UI_MODE_NIGHT_YES)
+annotation class ScaledThemedPreviews

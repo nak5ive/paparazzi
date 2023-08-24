@@ -1,7 +1,6 @@
 package app.cash.paparazzi.annotation.processor
 
 import com.google.devtools.ksp.getVisibility
-import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
@@ -30,18 +29,15 @@ class PaparazziProcessor(
     invoked = true
 
     val dependencies = Dependencies(true, *resolver.getAllFiles().toList().toTypedArray())
-    val (variantName, isTest) = collectProjectInfo(environment.codeGenerator, dependencies)
+    val isTest = isTestSourceSet(dependencies)
 
-    environment.logger.info("PAPARAZZI - running in $variantName")
+    return resolver.getSymbolsWithAnnotation("androidx.compose.runtime.Composable")
+      .findPaparazzi()
+      .also { functions ->
+        "found ${functions.count()} function(s)".log()
 
-    return findPaparazziFunctions(resolver)
-      .also {
-        environment.logger.info("PAPARAZZI - found ${it.count()} annotated function(s)")
-        if (isTest) {
-          PaparazziPoet.buildTestFiles(it)
-        } else {
-          PaparazziPoet.buildPreviewFiles(it)
-        }.forEach { file ->
+        PaparazziPoet.buildFiles(functions, isTest).forEach { file ->
+          "writing file: ${file.packageName}.${file.name}".log()
           file.writeTo(environment.codeGenerator, dependencies)
         }
       }
@@ -49,25 +45,27 @@ class PaparazziProcessor(
       .toList()
   }
 
-  private fun findPaparazziFunctions(resolver: Resolver) =
-    resolver.getSymbolsWithAnnotation("androidx.compose.runtime.Composable")
-      .filterIsInstance<KSFunctionDeclaration>()
+  private fun Sequence<KSAnnotated>.findPaparazzi() =
+    filterIsInstance<KSFunctionDeclaration>()
       .filter {
         it.annotations.hasPaparazzi() &&
           it.functionKind == TOP_LEVEL &&
           it.getVisibility() in listOf(PUBLIC, INTERNAL)
       }
 
-  private fun collectProjectInfo(codeGenerator: CodeGenerator, dependencies: Dependencies): Pair<String, Boolean> {
-    codeGenerator.createNewFile(dependencies, PACKAGE_NAME, "environment", "kt")
+  private fun isTestSourceSet(dependencies: Dependencies): Boolean {
+    environment.codeGenerator.createNewFile(dependencies, PACKAGE_NAME, "environment", "kt")
+    val file = environment.codeGenerator.generatedFile.first()
 
-    val file = codeGenerator.generatedFile.first()
-    val path = file.absolutePath
-
-    val variantRegex = Regex("ksp/(.+)/kotlin")
-    val (variantName) = variantRegex.find(path)!!.destructured
+    val variantName = Regex("ksp/(.+)/kotlin")
+      .find(file.absolutePath)?.groups?.get(1)?.value ?: ""
     val isTest = variantName.endsWith("UnitTest")
 
-    return (variantName to isTest).also { file.writeText("// variant: $variantName, test: $isTest") }
+    "variant: $variantName, test: $isTest".log()
+      .also { file.writeText("// $it") }
+
+    return isTest
   }
+
+  private fun String.log() = apply { environment.logger.info("PaparazziProcessor - $this") }
 }
