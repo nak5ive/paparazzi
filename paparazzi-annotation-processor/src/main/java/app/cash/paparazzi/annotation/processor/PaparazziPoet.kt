@@ -68,10 +68,6 @@ object PaparazziPoet {
                 addStatement("PreviewData(")
                 indent()
 
-                preview.previewArg<String>("name")
-                  .takeIf { it.isNotEmpty() }
-                  ?.let { addStatement("name = %S,", it) }
-
                 preview.previewArg<Float>("fontScale")
                   .takeIf { it != 1f }
                   ?.let { addStatement("fontScale = %Lf,", it) }

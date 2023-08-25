@@ -10,7 +10,6 @@ data class PaparazziAnnotationData(
 )
 
 data class PreviewData(
-  val name: String? = null,
   val fontScale: Float? = null,
   val device: String? = null,
   val uiMode: Int? = null,
