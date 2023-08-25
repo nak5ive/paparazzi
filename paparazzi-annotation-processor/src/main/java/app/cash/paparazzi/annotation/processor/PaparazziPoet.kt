@@ -43,8 +43,7 @@ object PaparazziPoet {
             indent()
 
             val functionClassName = ClassName(func.packageName.asString(), func.simpleName.asString())
-            addStatement("packageName = %S,", functionClassName.packageName)
-            addStatement("functionName = %S,", functionClassName.simpleName)
+            addStatement("functionName = %S,", functionClassName.canonicalName)
 
             val previewParam = func.previewParam()
             if (previewParam != null) {

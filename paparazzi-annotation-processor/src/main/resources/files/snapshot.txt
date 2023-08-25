@@ -23,13 +23,13 @@ fun Paparazzi.snapshot(
     data.previewParameter?.let { pp ->
       pp.provider.values.forEachIndexed { i, value ->
         val paramName = "${data.previewParameter!!.name}$i"
-        snapshot(snapshotName(data, preview, paramName)) {
+        snapshot(snapshotName(data.functionName, preview, paramName)) {
           CompositionLocalProvider(LocalInspectionMode provides localInspectionMode) {
             wrapper { data.composable(value) }
           }
         }
       }
-    } ?: snapshot(snapshotName(data, preview)) {
+    } ?: snapshot(snapshotName(data.functionName, preview)) {
       CompositionLocalProvider(LocalInspectionMode provides localInspectionMode) {
         wrapper { data.composable(null) }
       }
@@ -57,7 +57,7 @@ private fun PreviewData.hasArgs() =
   device != null || fontScale != null || uiMode != null || locale != null
 
 private fun snapshotName(
-  data: PaparazziAnnotationData,
+  functionName: String,
   preview: PreviewData?,
   paramName: String? = null
 ): String {
@@ -72,5 +72,5 @@ private fun snapshotName(
     ?.joinToString(",", "[", "]")
     ?: ""
 
-  return "${data.packageName}.${data.functionName}$args"
+  return functionName + args
 }
