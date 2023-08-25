@@ -1,14 +1,13 @@
 package app.cash.paparazzi.sample
 
 import android.content.res.Configuration
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -17,6 +16,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import app.cash.paparazzi.annotation.api.Paparazzi
+import app.cash.paparazzi.sample.theme.PaparazziTheme
 
 @Composable
 fun HelloPaparazzi(
@@ -24,7 +24,6 @@ fun HelloPaparazzi(
 ) {
   Column(
     Modifier
-      .background(Color.White)
       .fillMaxSize()
       .wrapContentSize()
   ) {
@@ -57,18 +56,26 @@ fun HelloPaparazzi(
 @ScaledThemedPreviews
 @Composable
 fun HelloPaparazziPreview() {
-  HelloPaparazzi(
-    text = "Hello, Paparazzi Preview"
-  )
+  PaparazziTheme {
+    Surface {
+      HelloPaparazzi(
+        text = "Hello, Paparazzi Preview"
+      )
+    }
+  }
 }
 
 @Paparazzi
 @ScaledThemedPreviews
 @Composable
 fun HelloPaparazziProvided(@PreviewParameter(TextProvider::class) text: String) {
-  HelloPaparazzi(
-    text = text
-  )
+  PaparazziTheme {
+    Surface {
+      HelloPaparazzi(
+        text = text
+      )
+    }
+  }
 }
 
 class TextProvider : PreviewParameterProvider<String> {
