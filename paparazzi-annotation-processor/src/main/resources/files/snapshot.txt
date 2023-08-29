@@ -18,7 +18,7 @@ fun Paparazzi.snapshot(
     val previews = if (data.previews.isEmpty()) listOf<PreviewData?>(null) else data.previews
     previews.map { data to it }
   }.forEach { (data, preview) ->
-    unsafeUpdateConfig(preview.deviceConfig())
+    unsafeUpdateConfig(deviceConfig(preview))
 
     data.previewParameter?.let { pp ->
       pp.provider.values.forEachIndexed { i, value ->
@@ -37,20 +37,15 @@ fun Paparazzi.snapshot(
   }
 }
 
-private fun PreviewData?.deviceConfig() =
-  (this?.device?.deviceConfig() ?: DeviceConfig.NEXUS_5)
-    .let { config ->
-      this?.fontScale?.let { config.copy(fontScale = it) } ?: config
-    }
-    .let { config ->
-      this?.uiMode?.uiMode()?.let { config.copy(uiMode = it) } ?: config
-    }
-    .let { config ->
-      this?.uiMode?.nightMode()?.let { config.copy(nightMode = it) } ?: config
-    }
-    .let { config ->
-      this?.locale?.let { config.copy(locale = it) } ?: config
-    }
+private fun Paparazzi.deviceConfig(preview: PreviewData?) =
+  (preview?.device?.deviceConfig() ?: DeviceConfig.NEXUS_5).let {
+    it.copy(
+      fontScale = preview?.fontScale ?: it.fontScale,
+      uiMode = preview?.uiMode?.uiMode() ?: it.uiMode,
+      nightMode = preview?.uiMode?.nightMode() ?: it.nightMode,
+      locale = preview?.locale ?: it.locale,
+    )
+  }
 
 private fun snapshotName(
   functionName: String,
