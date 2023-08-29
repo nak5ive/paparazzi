@@ -83,6 +83,10 @@ object PaparazziPoet {
                   .takeIf { it.isNotEmpty() }
                   ?.let { addStatement("locale = %S,", it) }
 
+                preview.previewArg<Long>("backgroundColor")
+                  .takeIf { it != 0L && preview.previewArg("showBackground") }
+                  ?.let { addStatement("backgroundColor = %S", it.toString(16)) }
+
                 unindent()
                 addStatement("),")
               }

@@ -85,6 +85,16 @@ class TextProvider : PreviewParameterProvider<String> {
   )
 }
 
+@Paparazzi
+@Preview(backgroundColor = 0xFFFFFF00, showBackground = true)
+@Preview(backgroundColor = 0xFF00FF00, showBackground = true)
+@Composable
+fun HelloPaparazziBackgroundPreview() {
+  HelloPaparazzi(
+    text = "Hello, Custom Background"
+  )
+}
+
 @Preview(fontScale = 1f, uiMode = Configuration.UI_MODE_NIGHT_NO)
 @Preview(fontScale = 1f, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Preview(fontScale = 2f, uiMode = Configuration.UI_MODE_NIGHT_NO)

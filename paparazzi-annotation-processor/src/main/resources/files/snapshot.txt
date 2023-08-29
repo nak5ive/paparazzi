@@ -1,5 +1,11 @@
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalInspectionMode
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.DeviceConfig.Companion
@@ -14,6 +20,30 @@ fun Paparazzi.snapshot(
   localInspectionMode: Boolean = true,
   wrapper: (@Composable (@Composable () -> Unit) -> Unit) = { it() },
 ) {
+  fun doSnapshot(
+    data: PaparazziAnnotationData,
+    preview: PreviewData? = null,
+    paramName: String? = null,
+    paramValue: Any? = null,
+  ) {
+    snapshot(snapshotName(data.functionName, preview, paramName)) {
+      CompositionLocalProvider( LocalInspectionMode provides localInspectionMode) {
+        Box(
+          modifier = Modifier
+            .fillMaxSize()
+            .then(
+              preview?.backgroundColor?.toLong(16)
+                ?.let(::Color)
+                ?.let { Modifier.background(it) }
+                ?: Modifier
+            )
+        ) {
+          wrapper { data.composable(paramValue) }
+        }
+      }
+    }
+  }
+
   annotations.flatMap { data ->
     val previews = if (data.previews.isEmpty()) listOf<PreviewData?>(null) else data.previews
     previews.map { data to it }
@@ -22,18 +52,9 @@ fun Paparazzi.snapshot(
 
     data.previewParameter?.let { pp ->
       pp.provider.values.forEachIndexed { i, value ->
-        val paramName = "${data.previewParameter!!.name}$i"
-        snapshot(snapshotName(data.functionName, preview, paramName)) {
-          CompositionLocalProvider(LocalInspectionMode provides localInspectionMode) {
-            wrapper { data.composable(value) }
-          }
-        }
+        doSnapshot(data, preview, "${pp.name}$i", value)
       }
-    } ?: snapshot(snapshotName(data.functionName, preview)) {
-      CompositionLocalProvider(LocalInspectionMode provides localInspectionMode) {
-        wrapper { data.composable(null) }
-      }
-    }
+    } ?: doSnapshot(data, preview)
   }
 }
 
@@ -53,11 +74,12 @@ private fun snapshotName(
   paramName: String? = null
 ): String {
   val args = buildList<String> {
-    preview?.fontScale?.let { "scale$it" }?.let(::add)
+    preview?.fontScale?.let { "fs_$it" }?.let(::add)
     preview?.uiMode?.nightMode()?.shortDisplayValue?.let(::add)
     preview?.uiMode?.uiMode()?.shortDisplayValue?.let(::add)
     preview?.device?.let { add(it.substringAfterLast(":")) }
     preview?.locale?.let(::add)
+    preview?.backgroundColor?.let { add("bg_$it") }
     paramName?.let(::add)
   }.takeIf { it.isNotEmpty() }
     ?.joinToString(",", "[", "]")

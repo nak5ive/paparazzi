@@ -13,6 +13,7 @@ data class PreviewData(
   val device: String? = null,
   val uiMode: Int? = null,
   val locale: String? = null,
+  val backgroundColor: String? = null,
 )
 
 data class PreviewParameterData(
