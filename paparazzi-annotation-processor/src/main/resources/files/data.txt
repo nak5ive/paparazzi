@@ -3,7 +3,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 
 data class PaparazziAnnotationData(
   val functionName: String,
-  val composable: (@Composable (Any?) -> Unit),
+  val composable: @Composable (Any?) -> Unit,
   val previews: List<PreviewData> = emptyList(),
   val previewParameter: PreviewParameterData? = null,
 )

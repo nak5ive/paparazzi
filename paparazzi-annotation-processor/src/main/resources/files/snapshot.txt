@@ -18,7 +18,7 @@ val paparazziAnnotations = paparazziPreviewAnnotations + paparazziTestAnnotation
 fun Paparazzi.snapshot(
   annotations: List<PaparazziAnnotationData>,
   localInspectionMode: Boolean = true,
-  wrapper: (@Composable (@Composable () -> Unit) -> Unit) = { it() },
+  wrapper: @Composable (@Composable () -> Unit) -> Unit = { it() },
 ) {
   fun doSnapshot(
     data: PaparazziAnnotationData,
