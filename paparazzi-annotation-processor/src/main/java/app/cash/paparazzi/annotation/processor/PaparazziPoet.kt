@@ -75,6 +75,14 @@ object PaparazziPoet {
                   .takeIf { it.isNotEmpty() }
                   ?.let { addStatement("device = %S,", it) }
 
+                preview.previewArg<Int>("widthDp")
+                  .takeIf { it > -1 }
+                  ?.let { addStatement("widthDp = %L,", it) }
+
+                preview.previewArg<Int>("heightDp")
+                  .takeIf { it > -1 }
+                  ?.let { addStatement("heightDp = %L,", it) }
+
                 preview.previewArg<Int>("uiMode")
                   .takeIf { it != 0 }
                   ?.let { addStatement("uiMode = %L,", it) }

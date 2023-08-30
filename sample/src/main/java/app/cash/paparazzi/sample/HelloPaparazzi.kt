@@ -86,8 +86,8 @@ class TextProvider : PreviewParameterProvider<String> {
 }
 
 @Paparazzi
-@Preview(backgroundColor = 0xFFFFFF00, showBackground = true)
-@Preview(backgroundColor = 0xFF00FF00, showBackground = true)
+@Preview(backgroundColor = 0xFFFFFF00, showBackground = true, widthDp = 200, heightDp = 200)
+@Preview(backgroundColor = 0xFF00FF00, showBackground = true, widthDp = 200, heightDp = 200)
 @Composable
 fun HelloPaparazziBackgroundPreview() {
   HelloPaparazzi(

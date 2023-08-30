@@ -1,3 +1,4 @@
+import android.util.DisplayMetrics
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -7,11 +8,13 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.unit.Dp
 import app.cash.paparazzi.DeviceConfig
 import app.cash.paparazzi.DeviceConfig.Companion
 import app.cash.paparazzi.Paparazzi
 import com.android.resources.NightMode
 import com.android.resources.UiMode
+import kotlin.math.roundToInt
 
 val paparazziAnnotations = paparazziPreviewAnnotations + paparazziTestAnnotations
 
@@ -59,14 +62,19 @@ fun Paparazzi.snapshot(
 }
 
 private fun Paparazzi.deviceConfig(preview: PreviewData?) =
-  (preview?.device?.deviceConfig() ?: DeviceConfig.NEXUS_5).let {
-    it.copy(
-      fontScale = preview?.fontScale ?: it.fontScale,
-      uiMode = preview?.uiMode?.uiMode() ?: it.uiMode,
-      nightMode = preview?.uiMode?.nightMode() ?: it.nightMode,
-      locale = preview?.locale ?: it.locale,
+  (preview?.device?.deviceConfig() ?: DeviceConfig.NEXUS_5).let { config ->
+    config.copy(
+      screenWidth = preview?.widthDp?.toPx(config.density.dpiValue) ?: config.screenWidth,
+      screenHeight = preview?.heightDp?.toPx(config.density.dpiValue) ?: config.screenHeight,
+      fontScale = preview?.fontScale ?: config.fontScale,
+      uiMode = preview?.uiMode?.uiMode() ?: config.uiMode,
+      nightMode = preview?.uiMode?.nightMode() ?: config.nightMode,
+      locale = preview?.locale ?: config.locale,
     )
   }
+
+private fun Int.toPx(dpi: Int) =
+  (this * (dpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT)).roundToInt()
 
 private fun snapshotName(
   functionName: String,
@@ -78,6 +86,8 @@ private fun snapshotName(
     preview?.uiMode?.nightMode()?.shortDisplayValue?.let(::add)
     preview?.uiMode?.uiMode()?.shortDisplayValue?.let(::add)
     preview?.device?.let { add(it.substringAfterLast(":")) }
+    preview?.widthDp?.let { add("w_$it") }
+    preview?.heightDp?.let { add("h_$it") }
     preview?.locale?.let(::add)
     preview?.backgroundColor?.let { add("bg_$it") }
     paramName?.let(::add)
