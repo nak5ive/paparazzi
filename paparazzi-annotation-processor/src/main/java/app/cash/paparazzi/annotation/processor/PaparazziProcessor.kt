@@ -59,7 +59,7 @@ class PaparazziProcessor(
     val file = environment.codeGenerator.generatedFile.first()
 
     val sep = File.separator
-    val variantName = Regex("ksp${sep}(.+)${sep}resources")
+    val variantName = Regex("ksp$sep(.+)${sep}resources")
       .find(file.absolutePath)?.groups?.get(1)?.value ?: ""
     val isTest = variantName.endsWith("UnitTest")
 
