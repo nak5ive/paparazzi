@@ -54,15 +54,15 @@ class PaparazziProcessor(
       }
 
   private fun isTestSourceSet(dependencies: Dependencies): Boolean {
-    environment.codeGenerator.createNewFile(dependencies, PACKAGE_NAME, "environment", "txt")
+    environment.codeGenerator.createNewFile(dependencies, PACKAGE_NAME, "environment", "kt")
     val file = environment.codeGenerator.generatedFile.first()
 
-    val variantName = Regex("ksp/(.+)/resources")
+    val variantName = Regex("ksp/(.+)/kotlin")
       .find(file.absolutePath)?.groups?.get(1)?.value ?: ""
     val isTest = variantName.endsWith("UnitTest")
 
     "variant: $variantName, test: $isTest".log()
-      .also { file.writeText(it) }
+      .also { file.writeText("// $it") }
 
     return isTest
   }
