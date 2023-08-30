@@ -56,7 +56,7 @@ class PaparazziProcessor(
   private fun isTestSourceSet(dependencies: Dependencies): Boolean {
     environment.codeGenerator.createNewFile(dependencies, PACKAGE_NAME, "environment", "txt")
     val file = environment.codeGenerator.generatedFile.first()
-    println("environment file: ${file.absolutePath}")
+    "environment file: ${file.absolutePath}".log()
 
     val variantName = Regex("ksp/(.+)/resources")
       .find(file.absolutePath)?.groups?.get(1)?.value ?: ""
