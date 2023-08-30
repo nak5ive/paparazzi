@@ -13,6 +13,7 @@ import com.google.devtools.ksp.symbol.Visibility.INTERNAL
 import com.google.devtools.ksp.symbol.Visibility.PUBLIC
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.ksp.writeTo
+import java.io.File
 
 class PaparazziProcessorProvider : SymbolProcessorProvider {
   override fun create(environment: SymbolProcessorEnvironment) = PaparazziProcessor(environment)
@@ -56,9 +57,9 @@ class PaparazziProcessor(
   private fun isTestSourceSet(dependencies: Dependencies): Boolean {
     environment.codeGenerator.createNewFile(dependencies, PACKAGE_NAME, "environment", "txt")
     val file = environment.codeGenerator.generatedFile.first()
-    "environment file: ${file.absolutePath}".log()
 
-    val variantName = Regex("ksp/(.+)/resources")
+    val sep = File.separator
+    val variantName = Regex("ksp${sep}(.+)${sep}resources")
       .find(file.absolutePath)?.groups?.get(1)?.value ?: ""
     val isTest = variantName.endsWith("UnitTest")
 

@@ -40,7 +40,7 @@ jobs:
         uses: gradle/gradle-build-action@v2
 
       - name: Run All Tests
-        run: ./gradlew check --info
+        run: ./gradlew check
 
       - name: Upload Test Failures
         if: failure()
