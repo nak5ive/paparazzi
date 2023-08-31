@@ -20,6 +20,7 @@ val paparazziAnnotations = paparazziPreviewAnnotations + paparazziTestAnnotation
 
 fun Paparazzi.snapshot(
   annotations: List<PaparazziAnnotationData>,
+  defaultDeviceConfig: DeviceConfig = DeviceConfig.NEXUS_5,
   localInspectionMode: Boolean = true,
   wrapper: @Composable (@Composable () -> Unit) -> Unit = { it() },
 ) {
@@ -51,7 +52,7 @@ fun Paparazzi.snapshot(
     val previews = if (data.previews.isEmpty()) listOf<PreviewData?>(null) else data.previews
     previews.map { data to it }
   }.forEach { (data, preview) ->
-    unsafeUpdateConfig(deviceConfig(preview))
+    unsafeUpdateConfig(preview.deviceConfig(defaultDeviceConfig))
 
     data.previewParameter?.let { pp ->
       pp.provider.values.forEachIndexed { i, value ->
@@ -61,15 +62,15 @@ fun Paparazzi.snapshot(
   }
 }
 
-private fun Paparazzi.deviceConfig(preview: PreviewData?) =
-  (preview?.device?.deviceConfig() ?: DeviceConfig.NEXUS_5).let { config ->
+private fun PreviewData?.deviceConfig(defaultDeviceConfig: DeviceConfig) =
+  (this?.device?.deviceConfig() ?: defaultDeviceConfig).let { config ->
     config.copy(
-      screenWidth = preview?.widthDp?.toPx(config.density.dpiValue) ?: config.screenWidth,
-      screenHeight = preview?.heightDp?.toPx(config.density.dpiValue) ?: config.screenHeight,
-      fontScale = preview?.fontScale ?: config.fontScale,
-      uiMode = preview?.uiMode?.uiMode() ?: config.uiMode,
-      nightMode = preview?.uiMode?.nightMode() ?: config.nightMode,
-      locale = preview?.locale ?: config.locale,
+      screenWidth = this?.widthDp?.toPx(config.density.dpiValue) ?: config.screenWidth,
+      screenHeight = this?.heightDp?.toPx(config.density.dpiValue) ?: config.screenHeight,
+      fontScale = this?.fontScale ?: config.fontScale,
+      uiMode = this?.uiMode?.uiMode() ?: config.uiMode,
+      nightMode = this?.uiMode?.nightMode() ?: config.nightMode,
+      locale = this?.locale ?: config.locale,
     )
   }
 
