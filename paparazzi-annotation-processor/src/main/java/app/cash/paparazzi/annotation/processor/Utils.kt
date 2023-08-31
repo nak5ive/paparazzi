@@ -1,9 +1,14 @@
 package app.cash.paparazzi.annotation.processor
 
+import com.google.devtools.ksp.getVisibility
+import com.google.devtools.ksp.symbol.FunctionKind.TOP_LEVEL
+import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSValueParameter
+import com.google.devtools.ksp.symbol.Visibility.INTERNAL
+import com.google.devtools.ksp.symbol.Visibility.PUBLIC
 import com.squareup.kotlinpoet.ClassName
 
 const val PACKAGE_NAME = "app.cash.paparazzi.annotation"
@@ -19,6 +24,14 @@ fun KSAnnotation.declaration() = annotationType.resolve().declaration
 fun <T> KSAnnotation.previewArg(name: String): T = arguments
   .first { it.name?.asString() == name }
   .let { it.value as T }
+
+fun Sequence<KSAnnotated>.findPaparazzi() =
+  filterIsInstance<KSFunctionDeclaration>()
+    .filter {
+      it.annotations.hasPaparazzi() &&
+        it.functionKind == TOP_LEVEL &&
+        it.getVisibility() in listOf(PUBLIC, INTERNAL)
+    }
 
 fun Sequence<KSAnnotation>.hasPaparazzi() = filter { it.isPaparazzi() }.count() > 0
 
