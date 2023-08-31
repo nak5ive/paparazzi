@@ -31,14 +31,13 @@ fun Paparazzi.snapshot(
     paramValue: Any? = null,
   ) {
     snapshot(snapshotName(data.functionName, preview, paramName)) {
-      CompositionLocalProvider( LocalInspectionMode provides localInspectionMode) {
+      CompositionLocalProvider(LocalInspectionMode provides localInspectionMode) {
         Box(
           modifier = Modifier
             .fillMaxSize()
             .then(
               preview?.backgroundColor?.toLong(16)
-                ?.let(::Color)
-                ?.let { Modifier.background(it) }
+                ?.let { Modifier.background(Color(it)) }
                 ?: Modifier
             )
         ) {
