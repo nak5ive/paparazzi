@@ -48,7 +48,8 @@ fun Paparazzi.snapshot(
   }
 
   annotations.flatMap { data ->
-    val previews = if (data.previews.isEmpty()) listOf<PreviewData?>(null) else data.previews
+    val previews = data.previews.takeIf { it.isNotEmpty() }
+      ?: listOf<PreviewData?>(null)
     previews.map { data to it }
   }.forEach { (data, preview) ->
     unsafeUpdateConfig(preview.deviceConfig(defaultDeviceConfig))

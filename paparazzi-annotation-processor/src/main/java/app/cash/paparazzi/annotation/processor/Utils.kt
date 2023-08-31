@@ -47,7 +47,20 @@ fun Sequence<KSAnnotation>.findPreviews(stack: Set<KSAnnotation> = setOf()): Seq
   return direct.plus(indirect)
 }
 
-fun KSFunctionDeclaration.findPreviews() = annotations.findPreviews().toList()
+fun KSFunctionDeclaration.findDistinctPreviews() = annotations.findPreviews().toList()
+    .map { preview ->
+      PreviewModel(
+        fontScale = preview.previewArg("fontScale"),
+        device = preview.previewArg("device") ,
+        widthDp = preview.previewArg("widthDp"),
+        heightDp = preview.previewArg("heightDp"),
+        uiMode = preview.previewArg("uiMode"),
+        locale = preview.previewArg("locale"),
+        backgroundColor = preview.previewArg("backgroundColor"),
+        showBackground = preview.previewArg("showBackground")
+      )
+    }
+    .distinct()
 
 fun KSFunctionDeclaration.previewParam() = parameters.firstOrNull { param ->
   param.annotations.any { it.isPreviewParameter() }
@@ -65,3 +78,14 @@ fun KSValueParameter.previewParamProviderClassName() = annotations
 fun KSValueParameter.previewParamTypeClassName() = type.resolve().declaration.qualifiedName?.let {
   ClassName(it.getQualifier(), it.getShortName())
 }
+
+data class PreviewModel(
+  val fontScale: Float,
+  val device: String,
+  val widthDp: Int,
+  val heightDp: Int,
+  val uiMode: Int,
+  val locale: String,
+  val backgroundColor: Long,
+  val showBackground: Boolean
+)

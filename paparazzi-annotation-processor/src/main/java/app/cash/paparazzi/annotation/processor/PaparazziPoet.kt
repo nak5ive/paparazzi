@@ -58,7 +58,7 @@ object PaparazziPoet {
               addStatement("composable = { %T() },", functionClassName)
             }
 
-            val previews = func.findPreviews()
+            val previews = func.findDistinctPreviews()
             if (previews.isNotEmpty()) {
               addStatement("previews = listOf(")
               indent()
@@ -67,32 +67,25 @@ object PaparazziPoet {
                 addStatement("PreviewData(")
                 indent()
 
-                preview.previewArg<Float>("fontScale")
-                  .takeIf { it != 1f }
+                preview.fontScale.takeIf { it != 1f }
                   ?.let { addStatement("fontScale = %Lf,", it) }
 
-                preview.previewArg<String>("device")
-                  .takeIf { it.isNotEmpty() }
+                preview.device.takeIf { it.isNotEmpty() }
                   ?.let { addStatement("device = %S,", it) }
 
-                preview.previewArg<Int>("widthDp")
-                  .takeIf { it > -1 }
+                preview.widthDp.takeIf { it > -1 }
                   ?.let { addStatement("widthDp = %L,", it) }
 
-                preview.previewArg<Int>("heightDp")
-                  .takeIf { it > -1 }
+                preview.heightDp.takeIf { it > -1 }
                   ?.let { addStatement("heightDp = %L,", it) }
 
-                preview.previewArg<Int>("uiMode")
-                  .takeIf { it != 0 }
+                preview.uiMode.takeIf { it != 0 }
                   ?.let { addStatement("uiMode = %L,", it) }
 
-                preview.previewArg<String>("locale")
-                  .takeIf { it.isNotEmpty() }
+                preview.locale.takeIf { it.isNotEmpty() }
                   ?.let { addStatement("locale = %S,", it) }
 
-                preview.previewArg<Long>("backgroundColor")
-                  .takeIf { it != 0L && preview.previewArg("showBackground") }
+                preview.backgroundColor.takeIf { it != 0L && preview.showBackground }
                   ?.let { addStatement("backgroundColor = %S", it.toString(16)) }
 
                 unindent()
