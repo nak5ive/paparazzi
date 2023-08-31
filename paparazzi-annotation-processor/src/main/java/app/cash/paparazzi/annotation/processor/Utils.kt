@@ -48,19 +48,19 @@ fun Sequence<KSAnnotation>.findPreviews(stack: Set<KSAnnotation> = setOf()): Seq
 }
 
 fun KSFunctionDeclaration.findDistinctPreviews() = annotations.findPreviews().toList()
-    .map { preview ->
-      PreviewModel(
-        fontScale = preview.previewArg("fontScale"),
-        device = preview.previewArg("device") ,
-        widthDp = preview.previewArg("widthDp"),
-        heightDp = preview.previewArg("heightDp"),
-        uiMode = preview.previewArg("uiMode"),
-        locale = preview.previewArg("locale"),
-        backgroundColor = preview.previewArg("backgroundColor"),
-        showBackground = preview.previewArg("showBackground")
-      )
-    }
-    .distinct()
+  .map { preview ->
+    PreviewModel(
+      fontScale = preview.previewArg("fontScale"),
+      device = preview.previewArg("device"),
+      widthDp = preview.previewArg("widthDp"),
+      heightDp = preview.previewArg("heightDp"),
+      uiMode = preview.previewArg("uiMode"),
+      locale = preview.previewArg("locale"),
+      backgroundColor = preview.previewArg("backgroundColor"),
+      showBackground = preview.previewArg("showBackground")
+    )
+  }
+  .distinct()
 
 fun KSFunctionDeclaration.previewParam() = parameters.firstOrNull { param ->
   param.annotations.any { it.isPreviewParameter() }
