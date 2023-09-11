@@ -83,7 +83,7 @@ private fun snapshotName(
   paramName: String? = null
 ): String {
   val args = buildList<String> {
-    preview?.fontScale?.let { "fs_$it" }?.let(::add)
+    preview?.fontScale?.fontScale()?.displayName()?.let(::add)
     preview?.uiMode?.nightMode()?.shortDisplayValue?.let(::add)
     preview?.uiMode?.uiMode()?.shortDisplayValue?.let(::add)
     preview?.device?.let { add(it.substringAfterLast(":")) }

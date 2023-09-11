@@ -43,3 +43,20 @@ internal fun Int.nightMode() = when(this and Configuration.UI_MODE_NIGHT_MASK) {
   Configuration.UI_MODE_NIGHT_YES -> NightMode.NIGHT
   else -> null
 }
+
+/**
+ * Maps [fontScale] to enum values similar to Preview
+ * see:
+    https://android.googlesource.com/platform/tools/adt/idea/+/refs/heads/mirror-goog-studio-main/compose-designer/src/com/android/tools/idea/compose/pickers/preview/enumsupport/PsiEnumValues.kt
+ */
+internal fun Float.fontScale() =
+  FontScale.values().find { this == it.value } ?: FontScale.CUSTOM.apply { value = this@fontScale }
+
+internal enum class FontScale(var value: Float?) {
+  DEFAULT(1f), SMALL(0.85f), LARGE(1.15f), LARGEST(1.30f), CUSTOM(null);
+
+  fun displayName() = when (this) {
+    CUSTOM -> "fs_$value"
+    else -> name
+  }
+}
