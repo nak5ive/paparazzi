@@ -1,0 +1,24 @@
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+
+data class PaparazziAnnotationData(
+  val functionName: String,
+  val composable: @Composable (Any?) -> Unit,
+  val previews: List<PreviewData> = emptyList(),
+  val previewParameter: PreviewParameterData? = null,
+)
+
+data class PreviewData(
+  val fontScale: Float? = null,
+  val device: String? = null,
+  val widthDp: Int? = null,
+  val heightDp: Int? = null,
+  val uiMode: Int? = null,
+  val locale: String? = null,
+  val backgroundColor: String? = null,
+)
+
+data class PreviewParameterData(
+  val name: String,
+  val provider: PreviewParameterProvider<out Any>,
+)

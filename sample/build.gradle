@@ -1,6 +1,8 @@
 apply plugin: 'com.android.library'
 apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: 'app.cash.paparazzi'
+apply plugin: 'com.google.devtools.ksp'
+
 
 android {
   namespace 'app.cash.paparazzi.sample'
@@ -25,6 +27,9 @@ android {
 dependencies {
   implementation libs.composeUi.material
   implementation libs.composeUi.uiTooling
+
+  implementation projects.paparazziAnnotations
+  ksp projects.paparazziPreviewProcessor
 
   testImplementation libs.testParameterInjector
 }

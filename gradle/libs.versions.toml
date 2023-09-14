@@ -6,6 +6,7 @@ composeCompiler = "1.5.1"
 javaTarget = "11"
 jcodec = "0.2.5"
 kotlin = "1.9.0"
+kotlinPoet = "1.14.2"
 ksp = "1.9.0-1.0.13"
 ktlint = "0.50.0"
 moshi = "1.15.0"
@@ -38,6 +39,9 @@ jcodec-javase = { module = "org.jcodec:jcodec-javase", version.ref = "jcodec" }
 
 kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlin" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version = "1.7.3" }
+
+kotlinPoet-core = { module = "com.squareup:kotlinpoet", version.ref = "kotlinPoet" }
+kotlinPoet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "kotlinPoet" }
 
 ksp = { module = "com.google.devtools.ksp:symbol-processing-api", version.ref = "ksp" }
 

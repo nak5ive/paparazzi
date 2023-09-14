@@ -1,0 +1,100 @@
+import android.util.DisplayMetrics
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.unit.Dp
+import app.cash.paparazzi.DeviceConfig
+import app.cash.paparazzi.DeviceConfig.Companion
+import app.cash.paparazzi.Paparazzi
+import com.android.resources.NightMode
+import com.android.resources.UiMode
+import kotlin.math.roundToInt
+
+val paparazziAnnotations = paparazziPreviewAnnotations + paparazziTestAnnotations
+
+fun Paparazzi.snapshot(
+  annotations: List<PaparazziAnnotationData>,
+  defaultDeviceConfig: DeviceConfig = DeviceConfig.NEXUS_5,
+  localInspectionMode: Boolean = true,
+  wrapper: @Composable (@Composable () -> Unit) -> Unit = { it() },
+) {
+  fun doSnapshot(
+    data: PaparazziAnnotationData,
+    preview: PreviewData? = null,
+    paramName: String? = null,
+    paramValue: Any? = null,
+  ) {
+    snapshot(snapshotName(data.functionName, preview, paramName)) {
+      CompositionLocalProvider(LocalInspectionMode provides localInspectionMode) {
+        Box(
+          modifier = Modifier
+            .fillMaxSize()
+            .then(
+              preview?.backgroundColor?.toLong(16)
+                ?.let { Modifier.background(Color(it)) }
+                ?: Modifier
+            )
+        ) {
+          wrapper { data.composable(paramValue) }
+        }
+      }
+    }
+  }
+
+  annotations.flatMap { data ->
+    val previews = data.previews.takeIf { it.isNotEmpty() }
+      ?: listOf<PreviewData?>(null)
+    previews.map { data to it }
+  }.forEach { (data, preview) ->
+    unsafeUpdateConfig(preview.deviceConfig(defaultDeviceConfig))
+
+    data.previewParameter?.let { pp ->
+      pp.provider.values.forEachIndexed { i, value ->
+        doSnapshot(data, preview, "${pp.name}$i", value)
+      }
+    } ?: doSnapshot(data, preview)
+  }
+}
+
+private fun PreviewData?.deviceConfig(defaultDeviceConfig: DeviceConfig) =
+  (this?.device?.deviceConfig() ?: defaultDeviceConfig).let { config ->
+    config.copy(
+      screenWidth = this?.widthDp?.toPx(config.density.dpiValue) ?: config.screenWidth,
+      screenHeight = this?.heightDp?.toPx(config.density.dpiValue) ?: config.screenHeight,
+      fontScale = this?.fontScale ?: config.fontScale,
+      uiMode = this?.uiMode?.uiMode() ?: config.uiMode,
+      nightMode = this?.uiMode?.nightMode() ?: config.nightMode,
+      locale = this?.locale ?: config.locale,
+    )
+  }
+
+private fun Int.toPx(dpi: Int) =
+  (this * (dpi.toFloat() / DisplayMetrics.DENSITY_DEFAULT)).roundToInt()
+
+private fun snapshotName(
+  functionName: String,
+  preview: PreviewData?,
+  paramName: String? = null
+): String {
+  val args = buildList<String> {
+    preview?.fontScale?.fontScale()?.displayName()?.let(::add)
+    preview?.uiMode?.nightMode()?.shortDisplayValue?.let(::add)
+    preview?.uiMode?.uiMode()?.shortDisplayValue?.let(::add)
+    preview?.device?.let { add(it.substringAfterLast(":")) }
+    preview?.widthDp?.let { add("w_$it") }
+    preview?.heightDp?.let { add("h_$it") }
+    preview?.locale?.let(::add)
+    preview?.backgroundColor?.let { add("bg_$it") }
+    paramName?.let(::add)
+  }.takeIf { it.isNotEmpty() }
+    ?.joinToString(",", "[", "]")
+    ?: ""
+
+  return functionName + args
+}

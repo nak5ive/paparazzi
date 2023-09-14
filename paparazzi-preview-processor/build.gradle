@@ -2,5 +2,7 @@ apply plugin: 'org.jetbrains.kotlin.jvm'
 apply plugin: 'com.vanniktech.maven.publish'
 
 dependencies {
+  implementation libs.kotlinPoet.core
+  implementation libs.kotlinPoet.ksp
   implementation libs.ksp
 }
