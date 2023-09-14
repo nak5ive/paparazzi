@@ -28,7 +28,7 @@ dependencies {
   implementation libs.composeUi.material
   implementation libs.composeUi.uiTooling
 
-  implementation projects.paparazziAnnotation
+  implementation projects.paparazziAnnotations
   ksp projects.paparazziAnnotationProcessor
 
   testImplementation libs.testParameterInjector

@@ -7,7 +7,7 @@ include ':libs:native-win'
 include ':libs:native-linux'
 include ':paparazzi'
 include ':paparazzi-agent'
-include ':paparazzi-annotation'
+include ':paparazzi-annotations'
 include ':paparazzi-annotation-processor'
 include ':paparazzi-gradle-plugin'
 
